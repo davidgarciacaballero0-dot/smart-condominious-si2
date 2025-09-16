@@ -1,5 +1,11 @@
+import 'package:app/theme.dart';
 import 'package:flutter/material.dart';
-import 'login_page.dart'; // Importamos la nueva página de login
+
+// ignore: unused_import
+import 'package.flutter/material.dart';
+import 'package:app/login_page.dart';
+// ignore: unused_import
+import 'app_theme.dart';
 
 void main() {
   runApp(const SmartCondominiumApp());
@@ -12,11 +18,8 @@ class SmartCondominiumApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Smart Condominium',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      // La pantalla inicial de la app es LoginPage
+      debugShowCheckedModeBanner: false,
+      theme: appTheme,
       home: const LoginPage(),
     );
   }
