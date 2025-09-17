@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+// 1. IMPORTA TODAS LAS PÁGINAS QUE USAMOS
 import 'finances_page.dart';
 import 'reservations_page.dart';
+import 'communications_page.dart';
 import 'login_page.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -80,22 +82,7 @@ class DashboardPage extends StatelessWidget {
   }
 }
 
-class CommunicationsPage extends StatelessWidget {
-  const CommunicationsPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Comunicados'),
-      ),
-      body: const Center(
-        child: Text('Página de Comunicados'),
-      ),
-    );
-  }
-}
-
+// Widget reutilizable para las tarjetas del Dashboard
 class DashboardCard extends StatelessWidget {
   const DashboardCard({
     super.key,
