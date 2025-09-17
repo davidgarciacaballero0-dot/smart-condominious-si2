@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
-// --- IMPORTACIONES NECESARIAS PARA LA NAVEGACIÓN ---
+// Importaciones necesarias para la navegación
 import 'finances_page.dart';
 import 'reservations_page.dart';
 import 'communications_page.dart';
 import 'login_page.dart';
+import 'app_drawer.dart'; // Importamos el drawer
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -12,9 +13,9 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AppDrawer(), // Menú lateral
       appBar: AppBar(
         title: const Text('Dashboard Principal'),
-        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -82,6 +83,7 @@ class DashboardPage extends StatelessWidget {
   }
 }
 
+// Widget reutilizable para las tarjetas del Dashboard
 class DashboardCard extends StatelessWidget {
   const DashboardCard({
     super.key,
