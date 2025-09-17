@@ -1,5 +1,8 @@
+// ignore_for_file: unused_import, deprecated_member_use
+
 import 'package:flutter/material.dart';
 
+import 'package.flutter/material.dart';
 import '../models/announcement_model.dart';
 
 class CommunicationsPage extends StatefulWidget {
@@ -10,7 +13,6 @@ class CommunicationsPage extends StatefulWidget {
 }
 
 class _CommunicationsPageState extends State<CommunicationsPage> {
-  // --- DATOS DE PRUEBA ACTUALIZADOS CON LOS NUEVOS ESTADOS ---
   final List<Announcement> _announcements = [
     Announcement(
       id: '1',
@@ -19,7 +21,7 @@ class _CommunicationsPageState extends State<CommunicationsPage> {
           'Estimados residentes, les informamos que el día 20 de septiembre se realizará el mantenimiento preventivo de los ascensores de la Torre A. El servicio estará suspendido de 9:00 a 13:00. Agradecemos su comprensión.',
       date: DateTime(2025, 9, 15),
       author: 'Administración',
-      isImportant: true, // Marcado como importante
+      isImportant: true,
       isRead: false,
     ),
     Announcement(
@@ -38,7 +40,7 @@ class _CommunicationsPageState extends State<CommunicationsPage> {
           'Les recordamos a todos los residentes que el horario de la piscina es de 9:00 a 21:00. Es obligatorio el uso de la ducha antes de ingresar. Por favor, sigamos las normas para el disfrute de todos.',
       date: DateTime(2025, 9, 10),
       author: 'Comité de Convivencia',
-      isRead: true, // Marcado como ya leído
+      isRead: true,
     ),
   ];
 
@@ -80,79 +82,86 @@ class AnnouncementCard extends StatelessWidget {
     required this.onReadMore,
   });
 
+  // --- NUEVA FUNCIÓN PARA DETERMINAR EL COLOR DE LA TARJETA ---
+  Color _getCardColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    if (announcement.isImportant && !announcement.isRead) {
+      return colorScheme.errorContainer
+          .withOpacity(0.3); // Color distintivo para importante y no leído
+    }
+    if (announcement.isRead) {
+      return Colors.grey.shade200; // Color para leído
+    }
+    return Colors.white; // Color para no leído (normal)
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
-
-    // --- LÓGICA VISUAL PARA LOS ESTADOS ---
-    final titleStyle = textTheme.titleMedium?.copyWith(
-      fontWeight: announcement.isRead ? FontWeight.normal : FontWeight.bold,
-    );
+    final cardColor = _getCardColor(context);
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Título del comunicado
-                Expanded(
-                  child: Text(announcement.title, style: titleStyle),
+      color: cardColor, // Aplicamos el color dinámico a la tarjeta
+      elevation: announcement.isRead ? 1 : 4,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // --- NUEVO CONTENEDOR PARA EL TÍTULO CON CONTORNO ---
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(
+                  color: announcement.isImportant
+                      ? colorScheme.error
+                      : colorScheme.primary,
+                  width: 5.0,
                 ),
-                // Indicador de "Sin Leer"
-                if (!announcement.isRead)
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary,
-                      shape: BoxShape.circle,
-                    ),
+              ),
+            ),
+            child: Text(
+              announcement.title,
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight:
+                    announcement.isRead ? FontWeight.normal : FontWeight.bold,
+              ),
+            ),
+          ),
+          // --- Contenido del comunicado ---
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8.0),
+                Text(
+                  'Publicado por ${announcement.author} el ${announcement.date.day}/${announcement.date.month}/${announcement.date.year}',
+                  style: textTheme.bodySmall
+                      ?.copyWith(fontStyle: FontStyle.italic),
+                ),
+                const SizedBox(height: 12.0),
+                Text(
+                  announcement.content,
+                  style: textTheme.bodyLarge,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8.0),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      onReadMore();
+                    },
+                    child: const Text('MARCAR COMO LEÍDO'),
                   ),
+                ),
               ],
             ),
-            const SizedBox(height: 8.0),
-            // Autor y Fecha
-            Text(
-              'Publicado por ${announcement.author} el ${announcement.date.day}/${announcement.date.month}/${announcement.date.year}',
-              style: textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
-            ),
-            const SizedBox(height: 12.0),
-            // Etiqueta de "Importante"
-            if (announcement.isImportant)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Chip(
-                  label: const Text('IMPORTANTE'),
-                  backgroundColor: colorScheme.errorContainer,
-                  labelStyle: TextStyle(color: colorScheme.onErrorContainer),
-                  padding: EdgeInsets.zero,
-                ),
-              ),
-            // Contenido del comunicado
-            Text(
-              announcement.content,
-              style: textTheme.bodyLarge,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 8.0),
-            // Botón para leer más
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  onReadMore(); // Llama a la función para marcar como leído
-                },
-                child: const Text('LEER MÁS'),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

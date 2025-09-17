@@ -1,25 +1,28 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "app",
-            "request": "launch",
-            "type": "dart"
-        },
-        {
-            "name": "app (profile mode)",
+            "name": "Smart Condominium (Debug)",
+            "cwd": "app", // <-- 1. LE DECIMOS QUE TRABAJE DENTRO DE LA CARPETA 'app'
             "request": "launch",
             "type": "dart",
-            "flutterMode": "profile"
+            "program": "lib/main.dart" // <-- 2. AHORA SÍ ENCONTRARÁ ESTE ARCHIVO
         },
         {
-            "name": "app (release mode)",
+            "name": "Smart Condominium (Profile)",
+            "cwd": "app",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "release"
+            "flutterMode": "profile",
+            "program": "lib/main.dart"
+        },
+        {
+            "name": "Smart Condominium (Release)",
+            "cwd": "app",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "program": "lib/main.dart"
         }
     ]
 }
