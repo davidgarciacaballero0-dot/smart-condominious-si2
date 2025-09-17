@@ -1,14 +1,15 @@
-// Usaremos un enum para definir los posibles estados de un pago.
-// Esto es más seguro que usar strings ("Pagado", "Pendiente").
 enum PaymentStatus { pagado, pendiente, vencido }
+
+enum PaymentType { expensa, servicio } // <-- AÑADIMOS ESTA LÍNEA
 
 class Payment {
   final String id;
-  final String concept; // Ej: "Expensas Enero 2025"
+  final String concept;
   final double amount;
-  final DateTime dueDate; // Fecha de vencimiento
+  final DateTime dueDate;
   final PaymentStatus status;
-  final DateTime? paymentDate; // Fecha en que se pagó (opcional)
+  final PaymentType type; // <-- AÑADIMOS ESTA LÍNEA
+  final DateTime? paymentDate;
 
   const Payment({
     required this.id,
@@ -16,6 +17,11 @@ class Payment {
     required this.amount,
     required this.dueDate,
     required this.status,
+    this.type = PaymentType.expensa, // <-- Por defecto, será una expensa
     this.paymentDate,
   });
+
+  Null get month => null;
+
+  Null get year => null;
 }

@@ -1,3 +1,5 @@
+// ignore_for_file: unused_import
+
 import 'package:flutter/material.dart';
 
 // 1. IMPORTA TODAS LAS PÁGINAS QUE USAMOS
@@ -77,6 +79,22 @@ class DashboardPage extends StatelessWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class FinancesPage extends StatelessWidget {
+  const FinancesPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Finanzas'),
+      ),
+      body: const Center(
+        child: Text('Página de Finanzas'),
       ),
     );
   }
