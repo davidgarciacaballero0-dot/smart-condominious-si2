@@ -1,11 +1,7 @@
-// ignore_for_file: unused_import, camel_case_types
-
 import 'package:flutter/material.dart';
 
-// 1. IMPORTA LOS ARCHIVOS DE LAS PÁGINAS REALES
 import 'finances_page.dart';
 import 'reservations_page.dart';
-import 'communications_page.dart';
 import 'login_page.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -54,14 +50,13 @@ class DashboardPage extends StatelessWidget {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const Communications_Page()));
+                      builder: (context) => const CommunicationsPage()));
             },
           ),
           DashboardCard(
             icon: Icons.event,
             title: 'Reservas',
             onTap: () {
-              // Ahora navegará a la página correcta
               Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -85,8 +80,8 @@ class DashboardPage extends StatelessWidget {
   }
 }
 
-class Communications_Page extends StatelessWidget {
-  const Communications_Page({super.key});
+class CommunicationsPage extends StatelessWidget {
+  const CommunicationsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -95,29 +90,12 @@ class Communications_Page extends StatelessWidget {
         title: const Text('Comunicados'),
       ),
       body: const Center(
-        child: Text('Página de Comunicados en construcción.'),
+        child: Text('Página de Comunicados'),
       ),
     );
   }
 }
 
-class FinancesPage extends StatelessWidget {
-  const FinancesPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Finanzas'),
-      ),
-      body: const Center(
-        child: Text('Página de Finanzas en construcción.'),
-      ),
-    );
-  }
-}
-
-// Widget reutilizable para las tarjetas del Dashboard (Este no cambia)
 class DashboardCard extends StatelessWidget {
   const DashboardCard({
     super.key,
@@ -151,5 +129,3 @@ class DashboardCard extends StatelessWidget {
     );
   }
 }
-
-// 2. HEMOS ELIMINADO LAS CLASES VACÍAS DE AQUÍ
