@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'models/reservation_model.dart'; // <-- Única importación correcta del modelo
+import 'models/reservation_model.dart'; // Importa el modelo correcto
 import 'booking_page.dart';
 
 class ReservationsPage extends StatefulWidget {
@@ -12,47 +12,44 @@ class ReservationsPage extends StatefulWidget {
 class _ReservationsPageState extends State<ReservationsPage> {
   final List<CommonArea> _commonAreas = [
     const CommonArea(
-      id: '1',
-      name: 'Piscina',
-      description: 'Piscina semiolímpica con área para niños.',
-      imageUrl: 'https://images.unsplash.com/photo-1575429198348-12b23c9a4731',
-      icon: Icons.pool,
-    ),
+        id: '1',
+        name: 'Piscina',
+        description: 'Piscina semiolímpica con área para niños.',
+        imageUrl:
+            'https://images.unsplash.com/photo-1575429198348-12b23c9a4731',
+        icon: Icons.pool),
     const CommonArea(
-      id: '2',
-      name: 'Salón de Eventos',
-      description: 'Amplio salón para fiestas y reuniones.',
-      imageUrl: 'https://images.unsplash.com/photo-1511795409834-ef04bbd51725',
-      icon: Icons.celebration,
-    ),
+        id: '2',
+        name: 'Salón de Eventos',
+        description: 'Amplio salón para fiestas y reuniones.',
+        imageUrl:
+            'https://images.unsplash.com/photo-1511795409834-ef04bbd51725',
+        icon: Icons.celebration),
     const CommonArea(
-      id: '3',
-      name: 'Cancha de Tenis',
-      description: 'Cancha reglamentaria con iluminación nocturna.',
-      imageUrl: 'https://images.unsplash.com/photo-1554167341-79e49a15f336',
-      icon: Icons.sports_tennis,
-    ),
+        id: '3',
+        name: 'Cancha de Tenis',
+        description: 'Cancha reglamentaria con iluminación nocturna.',
+        imageUrl: 'https://images.unsplash.com/photo-1554167341-79e49a15f336',
+        icon: Icons.sports_tennis),
     const CommonArea(
-      id: '4',
-      name: 'Gimnasio',
-      description: 'Equipado con máquinas de última generación.',
-      imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48',
-      icon: Icons.fitness_center,
-    ),
+        id: '4',
+        name: 'Gimnasio',
+        description: 'Equipado con máquinas de última generación.',
+        imageUrl:
+            'https://images.unsplash.com/photo-1534438327276-14e5300c3a48',
+        icon: Icons.fitness_center),
     const CommonArea(
-      id: '5',
-      name: 'Churrasquera',
-      description: 'Área social con parrilla y mesas al aire libre.',
-      imageUrl: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1',
-      icon: Icons.outdoor_grill,
-    ),
+        id: '5',
+        name: 'Churrasquera',
+        description: 'Área social con parrilla y mesas al aire libre.',
+        imageUrl: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1',
+        icon: Icons.outdoor_grill),
     const CommonArea(
-      id: '6',
-      name: 'Cancha de Fútbol',
-      description: 'Cancha de césped sintético para fútbol 5.',
-      imageUrl: 'https://images.unsplash.com/photo-1551958214-2d5e23a3c686',
-      icon: Icons.sports_soccer,
-    ),
+        id: '6',
+        name: 'Cancha de Fútbol',
+        description: 'Cancha de césped sintético para fútbol 5.',
+        imageUrl: 'https://images.unsplash.com/photo-1551958214-2d5e23a3c686',
+        icon: Icons.sports_soccer),
   ];
 
   @override
@@ -73,11 +70,8 @@ class _ReservationsPageState extends State<ReservationsPage> {
   }
 }
 
-// ESTA LÍNEA SE ELIMINÓ --> class CommonArea {}
-
 class CommonAreaCard extends StatelessWidget {
   final CommonArea commonArea;
-
   const CommonAreaCard({super.key, required this.commonArea});
 
   @override

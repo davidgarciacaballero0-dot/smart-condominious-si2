@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-// --- MODELO PARA UN ÁREA COMÚN ---
 class CommonArea {
   final String id;
   final String name;
@@ -17,7 +16,6 @@ class CommonArea {
   });
 }
 
-// --- MODELO PARA UNA RESERVA ---
 class Booking {
   final String id;
   final String commonAreaId;
@@ -25,6 +23,7 @@ class Booking {
   final DateTime date;
   final TimeOfDay startTime;
   final TimeOfDay endTime;
+  final int? numberOfGuests;
 
   const Booking({
     required this.id,
@@ -33,5 +32,6 @@ class Booking {
     required this.date,
     required this.startTime,
     required this.endTime,
+    this.numberOfGuests,
   });
 }

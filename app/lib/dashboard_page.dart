@@ -1,15 +1,12 @@
-// ignore_for_file: unused_import, duplicate_ignore
+// ignore_for_file: unused_import, camel_case_types
 
 import 'package:flutter/material.dart';
 
-// ignore: unused_import
-import 'package.flutter/material.dart';
-// Importa las páginas que creamos
+// 1. IMPORTA LOS ARCHIVOS DE LAS PÁGINAS REALES
 import 'finances_page.dart';
-// ignore: unused_import
 import 'reservations_page.dart';
 import 'communications_page.dart';
-import 'login_page.dart'; // <-- 1. IMPORTA LA PÁGINA DE LOGIN
+import 'login_page.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -20,23 +17,19 @@ class DashboardPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Dashboard Principal'),
         automaticallyImplyLeading: false,
-        // --- 2. AÑADIMOS LA SECCIÓN DE ACCIONES AQUÍ ---
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar Sesión', // Mensaje que aparece al dejar presionado
+            tooltip: 'Cerrar Sesión',
             onPressed: () {
-              // Lógica para cerrar sesión y volver a la pantalla de login
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const LoginPage()),
-                (Route<dynamic> route) =>
-                    false, // Elimina todas las rutas anteriores
+                (Route<dynamic> route) => false,
               );
             },
           ),
         ],
-        // -----------------------------------------
       ),
       body: GridView.count(
         crossAxisCount: 2,
@@ -61,13 +54,14 @@ class DashboardPage extends StatelessWidget {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const CommunicationsPage()));
+                      builder: (context) => const Communications_Page()));
             },
           ),
           DashboardCard(
             icon: Icons.event,
             title: 'Reservas',
             onTap: () {
+              // Ahora navegará a la página correcta
               Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -91,38 +85,34 @@ class DashboardPage extends StatelessWidget {
   }
 }
 
+class Communications_Page extends StatelessWidget {
+  const Communications_Page({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Comunicados'),
+      ),
+      body: const Center(
+        child: Text('Página de Comunicados en construcción.'),
+      ),
+    );
+  }
+}
+
 class FinancesPage extends StatelessWidget {
   const FinancesPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Finanzas')),
-      body: const Center(child: Text('Página de Finanzas')),
-    );
-  }
-}
-
-class ReservationsPage extends StatelessWidget {
-  const ReservationsPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Reservas')),
-      body: const Center(child: Text('Página de Reservas')),
-    );
-  }
-}
-
-class CommunicationsPage extends StatelessWidget {
-  const CommunicationsPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Comunicados')),
-      body: const Center(child: Text('Página de Comunicados')),
+      appBar: AppBar(
+        title: const Text('Finanzas'),
+      ),
+      body: const Center(
+        child: Text('Página de Finanzas en construcción.'),
+      ),
     );
   }
 }
@@ -161,3 +151,5 @@ class DashboardCard extends StatelessWidget {
     );
   }
 }
+
+// 2. HEMOS ELIMINADO LAS CLASES VACÍAS DE AQUÍ
