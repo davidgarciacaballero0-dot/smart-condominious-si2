@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'models/payment_model.dart';
 import 'payment_detail_page.dart';
+import 'package:intl/intl.dart'; // Importamos el paquete para formatear la fecha y hora
 
 class FinancesPage extends StatefulWidget {
   const FinancesPage({super.key});
@@ -20,7 +21,7 @@ class _FinancesPageState extends State<FinancesPage>
         amount: 550.00,
         dueDate: DateTime(2025, 9, 10),
         status: PaymentStatus.pagado,
-        paymentDate: DateTime(2025, 9, 5),
+        paymentDate: DateTime(2025, 9, 5, 10, 30),
         type: PaymentType.expensa),
     Payment(
         id: '2',
@@ -28,7 +29,7 @@ class _FinancesPageState extends State<FinancesPage>
         amount: 550.00,
         dueDate: DateTime(2025, 8, 10),
         status: PaymentStatus.pagado,
-        paymentDate: DateTime(2025, 8, 8),
+        paymentDate: DateTime(2025, 8, 8, 15, 45),
         type: PaymentType.expensa),
     Payment(
         id: '3',
@@ -78,14 +79,11 @@ class _FinancesPageState extends State<FinancesPage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mis Finanzas'),
-        // --- SECCIÓN DE PESTAÑAS CON NUEVOS COLORES ---
         bottom: TabBar(
           controller: _tabController,
-          labelColor: Colors
-              .white, // Color del texto e ícono de la pestaña seleccionada
-          unselectedLabelColor:
-              Colors.white70, // Color de la pestaña no seleccionada
-          indicatorColor: Colors.white, // Color de la línea indicadora de abajo
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: Colors.white,
           tabs: const [
             Tab(
               child: Row(
@@ -113,8 +111,8 @@ class _FinancesPageState extends State<FinancesPage>
       body: TabBarView(
         controller: _tabController,
         children: [
-          PaymentListView(payments: pendingPayments, isPendingList: true),
-          PaymentListView(payments: paidPayments, isPendingList: false),
+          PaymentListView(payments: pendingPayments),
+          PaymentListView(payments: paidPayments),
         ],
       ),
     );
@@ -123,9 +121,7 @@ class _FinancesPageState extends State<FinancesPage>
 
 class PaymentListView extends StatelessWidget {
   final List<Payment> payments;
-  final bool isPendingList;
-  const PaymentListView(
-      {super.key, required this.payments, this.isPendingList = false});
+  const PaymentListView({super.key, required this.payments});
 
   @override
   Widget build(BuildContext context) {
@@ -134,9 +130,7 @@ class PaymentListView extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Text(
-            isPendingList
-                ? '¡Felicidades! No tienes pagos pendientes.'
-                : 'Aún no se han registrado pagos.',
+            'No hay pagos en esta sección.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium,
           ),
@@ -160,14 +154,13 @@ class PaymentListItem extends StatelessWidget {
 
   (Color, IconData) _getStatusStyle(
       PaymentStatus status, BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     switch (status) {
       case PaymentStatus.pagado:
-        return (Colors.green.shade700, Icons.check_circle);
+        return (Colors.green, Icons.check_circle);
       case PaymentStatus.pendiente:
-        return (Colors.orange.shade800, Icons.hourglass_bottom);
+        return (Colors.orange, Icons.pending);
       case PaymentStatus.vencido:
-        return (colorScheme.error, Icons.error);
+        return (Colors.red, Icons.warning);
     }
   }
 
@@ -218,10 +211,21 @@ class PaymentListItem extends StatelessWidget {
                       style: textTheme.bodyLarge,
                     ),
                     const SizedBox(height: 4.0),
-                    Text(
-                      'Vence: ${payment.dueDate.day}/${payment.dueDate.month}/${payment.dueDate.year}',
-                      style: textTheme.bodyMedium,
-                    ),
+                    // --- CAMBIO REALIZADO AQUÍ ---
+                    // Si el pago está realizado, muestra la fecha y hora del pago.
+                    // Si no, muestra la fecha de vencimiento.
+                    if (payment.status == PaymentStatus.pagado &&
+                        payment.paymentDate != null)
+                      Text(
+                        'Pagado: ${DateFormat('dd/MM/yyyy HH:mm').format(payment.paymentDate!)} hrs',
+                        style: textTheme.bodyMedium
+                            ?.copyWith(color: Colors.green.shade800),
+                      )
+                    else
+                      Text(
+                        'Vence: ${DateFormat('dd/MM/yyyy').format(payment.dueDate)}',
+                        style: textTheme.bodyMedium,
+                      ),
                   ],
                 ),
               ),

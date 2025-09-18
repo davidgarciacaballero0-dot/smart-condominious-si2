@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
-
-// Importaciones necesarias para la navegación
-import 'finances_page.dart';
-import 'reservations_page.dart';
-import 'communications_page.dart';
-import 'login_page.dart';
 import 'app_drawer.dart'; // Importamos el drawer
+import 'login_page.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       drawer: const AppDrawer(), // Menú lateral
       appBar: AppBar(
-        title: const Text('Dashboard Principal'),
+        title: const Text('Menú  Principal'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -30,90 +27,36 @@ class DashboardPage extends StatelessWidget {
           ),
         ],
       ),
-      body: GridView.count(
-        crossAxisCount: 2,
-        padding: const EdgeInsets.all(16.0),
-        crossAxisSpacing: 16.0,
-        mainAxisSpacing: 16.0,
-        children: <Widget>[
-          DashboardCard(
-            icon: Icons.monetization_on,
-            title: 'Finanzas',
-            onTap: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const FinancesPage()));
-            },
+      // --- CUERPO SIMPLIFICADO ---
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.apartment_rounded,
+                size: 80,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Bienvenido a Smart Condominium',
+                style: textTheme.headlineSmall,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Selecciona una opción del menú lateral para comenzar.',
+                style: textTheme.bodyLarge,
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-          DashboardCard(
-            icon: Icons.campaign,
-            title: 'Comunicados',
-            onTap: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const CommunicationsPage()));
-            },
-          ),
-          DashboardCard(
-            icon: Icons.event,
-            title: 'Reservas',
-            onTap: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const ReservationsPage()));
-            },
-          ),
-          DashboardCard(
-            icon: Icons.notifications,
-            title: 'Notificaciones',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content:
-                        Text('Sección de Notificaciones en construcción.')),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Widget reutilizable para las tarjetas del Dashboard
-class DashboardCard extends StatelessWidget {
-  const DashboardCard({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Icon(icon, size: 50.0, color: colorScheme.primary),
-            const SizedBox(height: 16.0),
-            Text(title, style: textTheme.titleMedium),
-          ],
         ),
       ),
     );
   }
 }
+
+// El widget DashboardCard ya no es necesario en este archivo y ha sido eliminado.

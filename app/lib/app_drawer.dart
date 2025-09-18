@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 import 'models/profile_models.dart';
 
+// Importamos todas las páginas que vamos a necesitar para la navegación
+import 'dashboard_page.dart';
+import 'finances_page.dart';
+import 'reservations_page.dart';
+import 'communications_page.dart';
+import 'vehicle_management_page.dart';
+import 'pet_management_page.dart';
+
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
@@ -29,15 +37,54 @@ class AppDrawer extends StatelessWidget {
               color: Theme.of(context).colorScheme.primary,
             ),
           ),
+
+          // --- SECCIONES PRINCIPALES ---
           ListTile(
             leading: const Icon(Icons.dashboard_outlined),
-            title: const Text('Dashboard'),
+            title: const Text('Menú Principal'),
             onTap: () {
-              // Si el usuario ya está en el dashboard, solo cierra el drawer.
-              // Si estuviera en otra página, aquí podríamos navegar al dashboard.
+              // Cierra el drawer y navega a la página del Dashboard
               Navigator.pop(context);
+              Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const DashboardPage()));
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.monetization_on_outlined),
+            title: const Text('Pago de Expensas'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const FinancesPage()));
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.event_available_outlined),
+            title: const Text('Reservas'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const ReservationsPage()));
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.campaign_outlined),
+            title: const Text('Comunicados'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const CommunicationsPage()));
+            },
+          ),
+
           const Divider(),
 
           // --- MENÚ DESPLEGABLE PARA "MI UNIDAD" ---
@@ -45,33 +92,30 @@ class AppDrawer extends StatelessWidget {
             leading: const Icon(Icons.home_work_outlined),
             title: const Text(
               'Mi Unidad',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.w600),
             ),
             children: <Widget>[
-              // Opción para gestionar vehículos (dentro del menú)
               ListTile(
-                contentPadding:
-                    const EdgeInsets.only(left: 32.0), // Aumentamos el padding
-                leading: const Icon(Icons.directions_car_outlined),
+                contentPadding: const EdgeInsets.only(
+                    left: 72.0), // Padding aumentado para anidación
                 title: const Text('Gestionar Vehículos'),
                 onTap: () {
-                  // TODO: Navegar a la página de gestión de vehículos
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Navegando a Vehículos...')),
-                  );
+                  Navigator.pop(context);
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const VehicleManagementPage()));
                 },
               ),
-              // Opción para gestionar mascotas (dentro del menú)
               ListTile(
-                contentPadding:
-                    const EdgeInsets.only(left: 32.0), // Aumentamos el padding
-                leading: const Icon(Icons.pets_outlined),
+                contentPadding: const EdgeInsets.only(left: 72.0),
                 title: const Text('Gestionar Mascotas'),
                 onTap: () {
-                  // TODO: Navegar a la página de gestión de mascotas
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Navegando a Mascotas...')),
-                  );
+                  Navigator.pop(context);
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const PetManagementPage()));
                 },
               ),
             ],
