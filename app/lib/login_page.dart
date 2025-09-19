@@ -66,10 +66,13 @@ class _LoginPageState extends State<LoginPage> {
               child: Card(
                 elevation: 8.0,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.0)),
+                  borderRadius: BorderRadius.circular(16.0),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0, vertical: 32.0),
+                    horizontal: 24.0,
+                    vertical: 32.0,
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -83,8 +86,9 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: 24.0),
                       Text(
                         'INICIAR SESIÓN',
-                        style: textTheme.titleLarge
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                        style: textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24.0),

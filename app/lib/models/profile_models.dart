@@ -28,9 +28,9 @@ class Vehicle {
 
 class Pet {
   final String id;
-  final String name;
-  final String species; // Especie (Perro, Gato)
-  final String breed; // Raza
+  final String name; // <-- ESTA LÍNEA FALTABA O ESTABA INCORRECTA
+  final String species;
+  final String breed;
   final String color;
 
   const Pet({

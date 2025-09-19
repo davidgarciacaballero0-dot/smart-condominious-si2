@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'app_drawer.dart'; // Importamos el drawer
+import 'app_drawer.dart';
 import 'login_page.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -10,9 +10,9 @@ class DashboardPage extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      drawer: const AppDrawer(), // Menú lateral
+      drawer: const AppDrawer(),
       appBar: AppBar(
-        title: const Text('Menú  Principal'),
+        title: const Text('Menú Principal'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -27,17 +27,17 @@ class DashboardPage extends StatelessWidget {
           ),
         ],
       ),
-      // --- CUERPO SIMPLIFICADO ---
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.apartment_rounded,
-                size: 80,
-                color: Theme.of(context).colorScheme.primary,
+              // --- CAMBIO REALIZADO AQUÍ ---
+              // Reemplazamos el Icon por el nuevo Image.asset
+              Image.asset(
+                'assets/images/welcome_logo.png',
+                height: 180, // Puedes ajustar este tamaño a tu gusto
               ),
               const SizedBox(height: 24),
               Text(
@@ -58,5 +58,3 @@ class DashboardPage extends StatelessWidget {
     );
   }
 }
-
-// El widget DashboardCard ya no es necesario en este archivo y ha sido eliminado.

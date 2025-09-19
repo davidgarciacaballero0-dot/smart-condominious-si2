@@ -1,89 +1,81 @@
-// ignore_for_file: library_private_types_in_public_api
-
-import 'package:app/vehicle_management_page.dart';
 import 'package:flutter/material.dart';
 import 'models/profile_models.dart';
+import 'add_edit_pet_page.dart';
 
 class PetManagementPage extends StatefulWidget {
   const PetManagementPage({super.key});
 
   @override
-  _VehicleManagementPageState createState() => _VehicleManagementPageState();
+  State<PetManagementPage> createState() => _PetManagementPageState();
 }
 
-class _VehicleManagementPageState extends State<VehicleManagementPage> {
-  // Datos de prueba
-  final List<Vehicle> _vehicles = [
-    const Vehicle(
+class _PetManagementPageState extends State<PetManagementPage> {
+  final List<Pet> _pets = [
+    const Pet(
         id: '1',
-        brand: 'Toyota',
-        model: 'Corolla',
-        plate: '2457GTH',
-        color: 'Plata'),
-    const Vehicle(
+        name: 'Rocky',
+        species: 'Perro',
+        breed: 'Golden Retriever',
+        color: 'Dorado'),
+    const Pet(
         id: '2',
-        brand: 'Nissan',
-        model: 'Versa',
-        plate: '3829POK',
-        color: 'Rojo'),
+        name: 'Mishi',
+        species: 'Gato',
+        breed: 'Siames',
+        color: 'Blanco'),
   ];
 
-  void _addOrEditVehicle({Vehicle? vehicle}) {
-    // Lógica para mostrar un formulario (la crearemos más adelante)
-    // Por ahora, solo simula añadir un vehículo
-    setState(() {
-      if (vehicle == null) {
-        _vehicles.add(
-          Vehicle(
-              id: '${_vehicles.length + 1}',
-              brand: 'Nueva Marca',
-              model: 'Nuevo Modelo',
-              plate: '1234ABC',
-              color: 'Nuevo Color'),
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Vehículo añadido (simulación)')));
-      }
-    });
+  void _addOrEditPet({Pet? pet}) async {
+    final result = await Navigator.of(context).push<Pet>(
+      MaterialPageRoute(
+        builder: (context) => AddEditPetPage(pet: pet),
+      ),
+    );
+    if (result != null) {
+      setState(() {
+        if (pet != null) {
+          final index = _pets.indexWhere((p) => p.id == result.id);
+          if (index != -1) _pets[index] = result;
+        } else {
+          _pets.add(result);
+        }
+      });
+    }
   }
 
-  void _deleteVehicle(String id) {
+  void _deletePet(String id) {
     setState(() {
-      _vehicles.removeWhere((v) => v.id == id);
+      _pets.removeWhere((p) => p.id == id);
     });
     ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Vehículo eliminado')));
+        .showSnackBar(const SnackBar(content: Text('Mascota eliminada')));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Gestionar Vehículos'),
-      ),
+      appBar: AppBar(title: const Text('Gestionar Mascotas')),
       body: ListView.builder(
         padding: const EdgeInsets.all(16.0),
-        itemCount: _vehicles.length,
+        itemCount: _pets.length,
         itemBuilder: (context, index) {
-          final vehicle = _vehicles[index];
+          final pet = _pets[index];
           return Card(
             child: ListTile(
-              leading: const Icon(Icons.directions_car, size: 40),
-              title: Text('${vehicle.brand} ${vehicle.model}',
+              leading: const Icon(Icons.pets, size: 40),
+              title: Text(pet.name,
                   style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle:
-                  Text('Placa: ${vehicle.plate}\nColor: ${vehicle.color}'),
+                  Text('${pet.species} - ${pet.breed}\nColor: ${pet.color}'),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.edit_outlined, color: Colors.blue),
-                    onPressed: () => _addOrEditVehicle(vehicle: vehicle),
-                  ),
+                      icon: const Icon(Icons.edit_outlined, color: Colors.blue),
+                      onPressed: () => _addOrEditPet(pet: pet)),
                   IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.red),
-                    onPressed: () => _deleteVehicle(vehicle.id),
-                  ),
+                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                      onPressed: () => _deletePet(pet.id)),
                 ],
               ),
             ),
@@ -91,8 +83,8 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _addOrEditVehicle(),
-        label: const Text('Añadir Vehículo'),
+        onPressed: () => _addOrEditPet(),
+        label: const Text('Añadir Mascota'),
         icon: const Icon(Icons.add),
       ),
     );

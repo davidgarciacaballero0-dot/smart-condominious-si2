@@ -41,7 +41,7 @@ class AppDrawer extends StatelessWidget {
           // --- SECCIONES PRINCIPALES ---
           ListTile(
             leading: const Icon(Icons.dashboard_outlined),
-            title: const Text('Menú Principal'),
+            title: const Text('Menú '),
             onTap: () {
               // Cierra el drawer y navega a la página del Dashboard
               Navigator.pop(context);

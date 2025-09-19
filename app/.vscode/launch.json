@@ -3,10 +3,10 @@
     "configurations": [
         {
             "name": "Smart Condominium (Debug)",
-            "cwd": "app", // <-- 1. LE DECIMOS QUE TRABAJE DENTRO DE LA CARPETA 'app'
+            "cwd": "app",
             "request": "launch",
             "type": "dart",
-            "program": "lib/main.dart" // <-- 2. AHORA SÍ ENCONTRARÁ ESTE ARCHIVO
+            "program": "lib/main.dart"
         },
         {
             "name": "Smart Condominium (Profile)",
