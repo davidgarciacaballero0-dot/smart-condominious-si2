@@ -21,6 +21,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Para añadir assets a tu aplicación, añade una sección de assets como esta:
   assets:
     - assets/images/
-    
+    - assets/images/areas/ # <-- AÑADE ESTA LÍNEA PARA LA NUEVA CARPETA

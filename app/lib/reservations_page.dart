@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'models/reservation_model.dart'; // Importa el modelo correcto
+
+import '../models/reservation_model.dart';
 import 'booking_page.dart';
 
 class ReservationsPage extends StatefulWidget {
@@ -10,45 +11,43 @@ class ReservationsPage extends StatefulWidget {
 }
 
 class _ReservationsPageState extends State<ReservationsPage> {
+  // --- LISTA DE DATOS ACTUALIZADA CON RUTAS LOCALES ---
   final List<CommonArea> _commonAreas = [
     const CommonArea(
         id: '1',
         name: 'Piscina',
         description: 'Piscina semiolímpica con área para niños.',
-        imageUrl:
-            'https://images.unsplash.com/photo-1575429198348-12b23c9a4731',
+        imagePath: 'assets/images/areas/piscina.jpg',
         icon: Icons.pool),
     const CommonArea(
         id: '2',
         name: 'Salón de Eventos',
         description: 'Amplio salón para fiestas y reuniones.',
-        imageUrl:
-            'https://images.unsplash.com/photo-1511795409834-ef04bbd51725',
+        imagePath: 'assets/images/areas/salon.jpg',
         icon: Icons.celebration),
     const CommonArea(
         id: '3',
         name: 'Cancha de Tenis',
         description: 'Cancha reglamentaria con iluminación nocturna.',
-        imageUrl: 'https://images.unsplash.com/photo-1554167341-79e49a15f336',
+        imagePath: 'assets/images/areas/tenis.jpg',
         icon: Icons.sports_tennis),
     const CommonArea(
         id: '4',
         name: 'Gimnasio',
         description: 'Equipado con máquinas de última generación.',
-        imageUrl:
-            'https://images.unsplash.com/photo-1534438327276-14e5300c3a48',
+        imagePath: 'assets/images/areas/gimnasio.jpg',
         icon: Icons.fitness_center),
     const CommonArea(
         id: '5',
         name: 'Churrasquera',
         description: 'Área social con parrilla y mesas al aire libre.',
-        imageUrl: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1',
+        imagePath: 'assets/images/areas/churrasquera.jpg',
         icon: Icons.outdoor_grill),
     const CommonArea(
         id: '6',
         name: 'Cancha de Fútbol',
         description: 'Cancha de césped sintético para fútbol 5.',
-        imageUrl: 'https://images.unsplash.com/photo-1551958214-2d5e23a3c686',
+        imagePath: 'assets/images/areas/futbol.jpg',
         icon: Icons.sports_soccer),
   ];
 
@@ -72,6 +71,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
 
 class CommonAreaCard extends StatelessWidget {
   final CommonArea commonArea;
+
   const CommonAreaCard({super.key, required this.commonArea});
 
   @override
@@ -93,23 +93,11 @@ class CommonAreaCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Image.network(
-              commonArea.imageUrl,
+            // --- CAMBIO DE Image.network a Image.asset ---
+            Image.asset(
+              commonArea.imagePath,
               height: 150,
               fit: BoxFit.cover,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return const SizedBox(
-                  height: 150,
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return const SizedBox(
-                  height: 150,
-                  child: Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                );
-              },
             ),
             Padding(
               padding: const EdgeInsets.all(16.0),
