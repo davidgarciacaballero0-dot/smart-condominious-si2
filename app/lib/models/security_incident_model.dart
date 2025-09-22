@@ -18,3 +18,25 @@ class SecurityIncident {
     required this.reportedBy,
   });
 }
+// Archivo: lib/models/security_incident_model.dart
+
+// ... (El enum UrgencyLevel y la clase SecurityIncident no cambian) ...
+
+// --- AÑADE ESTA NUEVA CLASE AL FINAL DEL ARCHIVO ---
+class VisitorLog {
+  final String id;
+  final String visitorName;
+  final String visitingTo; // A quién visita
+  final String? vehiclePlate; // Placa del vehículo (opcional)
+  final DateTime entryTime;
+  DateTime? exitTime; // La hora de salida es opcional
+
+  VisitorLog({
+    required this.id,
+    required this.visitorName,
+    required this.visitingTo,
+    this.vehiclePlate,
+    required this.entryTime,
+    this.exitTime,
+  });
+}
