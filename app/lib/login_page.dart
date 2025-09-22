@@ -1,7 +1,10 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: unused_import, deprecated_member_use
 
 import 'package:flutter/material.dart';
 import 'dashboard_page.dart';
+import 'models/profile_models.dart'; // Importamos el modelo con los roles
+import 'security_dashboard_page.dart'; // Importamos el dashboard de seguridad
+import 'maintenance_dashboard_page.dart'; // Importamos el dashboard de mantenimiento
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,15 +24,25 @@ class _LoginPageState extends State<LoginPage> {
     });
     await Future.delayed(const Duration(seconds: 2));
 
-    if (_emailController.text == "residente@email.com" &&
-        _passwordController.text == "123456") {
-      if (mounted) {
+    String email = _emailController.text;
+    String password = _passwordController.text;
+    Widget? homePage;
+
+    // --- LÓGICA DE ROLES ---
+    if (email == "residente@email.com" && password == "123456") {
+      homePage = const DashboardPage(); // Vista de Residente
+    } else if (email == "seguridad@email.com" && password == "123456") {
+      homePage = const SecurityDashboardPage(); // Vista de Seguridad
+    } else if (email == "mantenimiento@email.com" && password == "123456") {
+      homePage = const MaintenanceDashboardPage(); // Vista de Mantenimiento
+    }
+
+    if (mounted) {
+      if (homePage != null) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const DashboardPage()),
+          MaterialPageRoute(builder: (context) => homePage!),
         );
-      }
-    } else {
-      if (mounted) {
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Error: Credenciales incorrectas.'),
@@ -48,66 +61,52 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    // ... (El resto del build de LoginPage no cambia, sigue siendo el mismo diseño)
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(
-            'assets/images/logo_main.png',
-            fit: BoxFit.cover,
-            color: Colors.black.withOpacity(0.5),
-            colorBlendMode: BlendMode.darken,
-          ),
+          Image.asset('assets/images/logo_main.png',
+              fit: BoxFit.cover,
+              color: Colors.black.withOpacity(0.5),
+              colorBlendMode: BlendMode.darken),
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Card(
                 elevation: 8.0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                ),
+                    borderRadius: BorderRadius.circular(16.0)),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0,
-                    vertical: 32.0,
-                  ),
+                      horizontal: 24.0, vertical: 32.0),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      // --- CÓDIGO DEL LOGO MODIFICADO AQUÍ ---
-                      Image.asset(
-                        'assets/images/logo_main.png',
-                        height:
-                            110, // Le damos una altura fija y el ancho se ajustará solo
-                      ),
+                      Image.asset('assets/images/logo_main.png', height: 110),
                       const SizedBox(height: 24.0),
-                      Text(
-                        'INICIAR SESIÓN',
-                        style: textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+                      Text('INICIAR SESIÓN',
+                          style: textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center),
                       const SizedBox(height: 24.0),
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
-                          labelText: 'Correo Electrónico',
-                          prefixIcon: Icon(Icons.email_outlined),
-                        ),
+                            labelText: 'Correo Electrónico',
+                            prefixIcon: Icon(Icons.email_outlined)),
                       ),
                       const SizedBox(height: 16.0),
                       TextFormField(
                         controller: _passwordController,
                         obscureText: true,
                         decoration: const InputDecoration(
-                          labelText: 'Contraseña',
-                          prefixIcon: Icon(Icons.lock_outline),
-                        ),
+                            labelText: 'Contraseña',
+                            prefixIcon: Icon(Icons.lock_outline)),
                       ),
                       const SizedBox(height: 24.0),
                       _isLoading

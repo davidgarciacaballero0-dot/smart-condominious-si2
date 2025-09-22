@@ -1,3 +1,5 @@
+enum UserRole { residente, seguridad, mantenimiento }
+
 class UserProfile {
   final String name;
   final String unit; // Unidad habitacional, ej: "Uruguay 20"
