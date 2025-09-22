@@ -1,111 +1,134 @@
 import 'package:flutter/material.dart';
-import 'login_page.dart';
-import 'dashboard_page.dart'; // <-- IMPORTAMOS DASHBOARD_PAGE PARA USAR DASHBOARDCARD
-import 'report_incident_page.dart';
-import 'visitor_log_page.dart';
+import 'dashboard_page.dart';
+import 'models/profile_models.dart';
+import 'security_dashboard_page.dart';
+import 'maintenance_dashboard_page.dart';
 
-class SecurityDashboardPage extends StatelessWidget {
-  const SecurityDashboardPage({super.key});
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard de Seguridad'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar Sesión',
-            onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginPage()),
-                (Route<dynamic> route) => false,
-              );
-            },
-          ),
-        ],
-      ),
-      drawer: const SecurityDrawer(),
-      body: GridView.count(
-        crossAxisCount: 2,
-        padding: const EdgeInsets.all(16.0),
-        crossAxisSpacing: 16.0,
-        mainAxisSpacing: 16.0,
-        children: <Widget>[
-          DashboardCard(
-            icon: Icons.person_add_alt_1_outlined,
-            title: 'Registrar Visita',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const VisitorLogPage()),
-              );
-            },
-          ),
-          DashboardCard(
-            icon: Icons.report_problem_outlined,
-            title: 'Reportar Incidente',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const ReportIncidentPage()),
-              );
-            },
-          ),
-          DashboardCard(
-            icon: Icons.notifications_active_outlined,
-            title: 'Alertas IA',
-            onTap: () {
-              // TODO: Navegar al feed de alertas de IA
-            },
-          ),
-          DashboardCard(
-            icon: Icons.camera_outdoor_outlined,
-            title: 'Ver Cámaras',
-            onTap: () {
-              // TODO: Navegar a la vista de cámaras
-            },
-          ),
-        ],
-      ),
-    );
-  }
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class SecurityDrawer extends StatelessWidget {
-  const SecurityDrawer({super.key});
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  Future<void> _performLogin() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await Future.delayed(const Duration(seconds: 2));
+
+    String email = _emailController.text;
+    String password = _passwordController.text;
+    Widget? homePage;
+
+    // --- LÓGICA DE ROLES ---
+    if (email == "residente@email.com" && password == "123456") {
+      homePage = const DashboardPage(); // Vista de Residente
+    } else if (email == "seguridad@email.com" && password == "123456") {
+      homePage = const SecurityDashboardPage(); // Vista de Seguridad
+    } else if (email == "mantenimiento@email.com" && password == "123456") {
+      homePage = const MaintenanceDashboardPage(); // Vista de Mantenimiento
+    }
+
+    if (mounted) {
+      if (homePage != null) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => homePage),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error: Credenciales incorrectas.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: <Widget>[
-          UserAccountsDrawerHeader(
-            accountName: const Text('Carlos Rojas',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            accountEmail: const Text('Personal de Seguridad'),
-            currentAccountPicture: const CircleAvatar(
-                child: Icon(Icons.security_outlined, size: 50)),
-            decoration:
-                BoxDecoration(color: Theme.of(context).colorScheme.primary),
+    final textTheme = Theme.of(context).textTheme;
+
+    return Scaffold(
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // --- IMAGEN DE FONDO ---
+          Image.asset(
+            'assets/images/logo_main.png',
+            fit: BoxFit.cover,
+            color:
+                Colors.black.withOpacity(0.5), // Velo oscuro para legibilidad
+            colorBlendMode: BlendMode.darken,
           ),
-          ListTile(
-            leading: const Icon(Icons.dashboard_outlined),
-            title: const Text('Dashboard'),
-            onTap: () => Navigator.pop(context),
-          ),
-          ListTile(
-            leading: const Icon(Icons.view_list_outlined),
-            title: const Text('Historial de Visitas'),
-            onTap: () {},
-          ),
-          ListTile(
-            leading: const Icon(Icons.history_outlined),
-            title: const Text('Historial de Incidentes'),
-            onTap: () {},
+          // --- FORMULARIO CENTRADO ---
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Card(
+                elevation: 8.0,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.0)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0, vertical: 32.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Image.asset(
+                        'assets/images/logo_login.png',
+                        height: 110, // Tamaño final del logo
+                      ),
+                      const SizedBox(height: 24.0),
+                      Text(
+                        'INICIAR SESIÓN',
+                        style: textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24.0),
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(
+                          labelText: 'Correo Electrónico',
+                          prefixIcon: Icon(Icons.email_outlined),
+                        ),
+                      ),
+                      const SizedBox(height: 16.0),
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Contraseña',
+                          prefixIcon: Icon(Icons.lock_outline),
+                        ),
+                      ),
+                      const SizedBox(height: 24.0),
+                      _isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : ElevatedButton(
+                              onPressed: _performLogin,
+                              child: const Text('ENTRAR'),
+                            ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),

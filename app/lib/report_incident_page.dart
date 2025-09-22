@@ -33,8 +33,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
         reportedBy: 'Guardia de Turno', // Esto vendría del usuario logueado
       );
 
-      // TODO: Save incident to storage or service
-      print('New incident reported: ${incident.title}');
+      debugPrint('New incident reported: ${incident.title}');
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -69,7 +68,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<UrgencyLevel>(
-                value: _selectedUrgency,
+                initialValue: _selectedUrgency,
                 decoration:
                     const InputDecoration(labelText: 'Nivel de Urgencia'),
                 items: UrgencyLevel.values.map((UrgencyLevel level) {

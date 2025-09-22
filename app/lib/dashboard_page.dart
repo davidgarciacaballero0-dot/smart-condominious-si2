@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'finances_page.dart';
-import 'reservations_page.dart';
-import 'communications_page.dart';
-import 'package:tu_app/pages/login_page.dart';
+import 'package:app/login_page.dart'; // Corregido
 import 'package:app/app_drawer.dart';
 
 class DashboardPage extends StatelessWidget {
