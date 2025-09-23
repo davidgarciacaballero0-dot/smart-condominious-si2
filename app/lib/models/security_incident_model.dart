@@ -26,6 +26,7 @@ class SecurityIncident {
 class VisitorLog {
   final String id;
   final String visitorName;
+  final String visitorCI; // <-- CAMBIO REALIZADO
   final String visitingTo; // A quién visita
   final String? vehiclePlate; // Placa del vehículo (opcional)
   final DateTime entryTime;
@@ -34,6 +35,7 @@ class VisitorLog {
   VisitorLog({
     required this.id,
     required this.visitorName,
+    required this.visitorCI, // <-- CAMBIO REALIZADO
     required this.visitingTo,
     this.vehiclePlate,
     required this.entryTime,

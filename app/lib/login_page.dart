@@ -1,3 +1,5 @@
+// ignore_for_file: unused_import, deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'dashboard_page.dart';
 import 'models/profile_models.dart';
@@ -15,6 +17,8 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
+
+  // ... (resto del archivo sin cambios)
 
   Future<void> _performLogin() async {
     setState(() {
@@ -38,7 +42,8 @@ class _LoginPageState extends State<LoginPage> {
     if (mounted) {
       if (homePage != null) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => homePage),
+          // --- AQUÍ ESTÁ LA CORRECCIÓN ---
+          MaterialPageRoute(builder: (context) => homePage!),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -56,6 +61,8 @@ class _LoginPageState extends State<LoginPage> {
       });
     }
   }
+
+// ... (resto del archivo sin cambios)
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +96,7 @@ class _LoginPageState extends State<LoginPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
                       Image.asset(
-                        'assets/images/logo_login.png',
+                        'assets/images/logo_main.png',
                         height: 110, // Tamaño final del logo
                       ),
                       const SizedBox(height: 24.0),

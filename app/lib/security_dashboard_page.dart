@@ -1,8 +1,10 @@
+import 'package:app/report_incident_page.dart';
+import 'package:app/visitor_exit_page.dart';
 import 'package:flutter/material.dart';
 import 'package:app/login_page.dart';
-import 'package:app/report_incident_page.dart';
 import 'package:app/visitor_log_page.dart';
-import 'package:app/dashboard_card.dart'; // <-- IMPORTANTE: Añadimos la importación
+import 'package:app/dashboard_card.dart';
+import 'package:app/visitor_history_page.dart';
 
 class SecurityDashboardPage extends StatelessWidget {
   const SecurityDashboardPage({super.key});
@@ -34,7 +36,6 @@ class SecurityDashboardPage extends StatelessWidget {
         mainAxisSpacing: 16.0,
         children: <Widget>[
           DashboardCard(
-            // <-- Esto ahora funcionará
             icon: Icons.person_add_alt_1_outlined,
             title: 'Registrar Visita',
             onTap: () {
@@ -45,7 +46,17 @@ class SecurityDashboardPage extends StatelessWidget {
             },
           ),
           DashboardCard(
-            // <-- Esto ahora funcionará
+            icon: Icons.logout_outlined,
+            title: 'Registrar Salida',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const VisitorExitPage()),
+              );
+            },
+          ),
+          DashboardCard(
             icon: Icons.report_problem_outlined,
             title: 'Reportar Incidente',
             onTap: () {
@@ -57,13 +68,11 @@ class SecurityDashboardPage extends StatelessWidget {
             },
           ),
           DashboardCard(
-            // <-- Esto ahora funcionará
             icon: Icons.notifications_active_outlined,
             title: 'Alertas IA',
             onTap: () {},
           ),
           DashboardCard(
-            // <-- Esto ahora funcionará
             icon: Icons.camera_outdoor_outlined,
             title: 'Ver Cámaras',
             onTap: () {},
@@ -100,7 +109,14 @@ class SecurityDrawer extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.view_list_outlined),
             title: const Text('Historial de Visitas'),
-            onTap: () {},
+            onTap: () {
+              Navigator.pop(context); // Cierra el drawer
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const VisitorHistoryPage()),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.history_outlined),
