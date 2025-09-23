@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'models/security_incident_model.dart'; // Importamos el modelo que creamos
+import 'data/mock_data.dart'; // <-- 1. AÑADE ESTA IMPORTACIÓN
 
 class ReportIncidentPage extends StatefulWidget {
   const ReportIncidentPage({super.key});
@@ -23,17 +24,17 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
-      // Aquí iría la lógica para guardar el incidente
       final incident = SecurityIncident(
         id: DateTime.now().toIso8601String(),
         title: _titleController.text,
         description: _descriptionController.text,
         date: DateTime.now(),
         urgency: _selectedUrgency,
-        reportedBy: 'Guardia de Turno', // Esto vendría del usuario logueado
+        reportedBy: 'Carlos Rojas', // Esto vendría del usuario logueado
       );
 
-      debugPrint('New incident reported: ${incident.title}');
+      // Añadimos el nuevo incidente a nuestra lista de datos
+      mockIncidents.add(incident);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -41,7 +42,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.of(context).pop(); // Vuelve a la pantalla anterior
+      Navigator.of(context).pop();
     }
   }
 

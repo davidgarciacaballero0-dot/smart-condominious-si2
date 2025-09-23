@@ -5,6 +5,7 @@ import 'package:app/login_page.dart';
 import 'package:app/visitor_log_page.dart';
 import 'package:app/dashboard_card.dart';
 import 'package:app/visitor_history_page.dart';
+import 'package:app/incident_history_page.dart'; // <-- 1. AÑADE ESTA IMPORTACIÓN
 
 class SecurityDashboardPage extends StatelessWidget {
   const SecurityDashboardPage({super.key});
@@ -92,25 +93,12 @@ class SecurityDrawer extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
-          UserAccountsDrawerHeader(
-            accountName: const Text('Carlos Rojas',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            accountEmail: const Text('Personal de Seguridad'),
-            currentAccountPicture: const CircleAvatar(
-                child: Icon(Icons.security_outlined, size: 50)),
-            decoration:
-                BoxDecoration(color: Theme.of(context).colorScheme.primary),
-          ),
-          ListTile(
-            leading: const Icon(Icons.dashboard_outlined),
-            title: const Text('Dashboard'),
-            onTap: () => Navigator.pop(context),
-          ),
+          // ... (UserAccountsDrawerHeader y otros ListTiles sin cambios) ...
           ListTile(
             leading: const Icon(Icons.view_list_outlined),
             title: const Text('Historial de Visitas'),
             onTap: () {
-              Navigator.pop(context); // Cierra el drawer
+              Navigator.pop(context);
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -118,10 +106,18 @@ class SecurityDrawer extends StatelessWidget {
               );
             },
           ),
+          // --- 2. MODIFICA ESTE LISTTILE ---
           ListTile(
             leading: const Icon(Icons.history_outlined),
             title: const Text('Historial de Incidentes'),
-            onTap: () {},
+            onTap: () {
+              Navigator.pop(context); // Cierra el drawer
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const IncidentHistoryPage()),
+              );
+            },
           ),
         ],
       ),

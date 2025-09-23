@@ -26,3 +26,32 @@ final List<VisitorLog> mockVisitorLogs = [
     exitTime: DateTime.now().subtract(const Duration(days: 1, hours: -2)),
   ),
 ];
+final List<SecurityIncident> mockIncidents = [
+  SecurityIncident(
+    id: '1',
+    title: 'Vehículo mal estacionado',
+    description:
+        'El vehículo Toyota Corolla con placa 2457GTH se encuentra bloqueando una salida de emergencia.',
+    date: DateTime.now().subtract(const Duration(hours: 3)),
+    urgency: UrgencyLevel.media,
+    reportedBy: 'Guardia A',
+  ),
+  SecurityIncident(
+    id: '2',
+    title: 'Mascota sin correa en área común',
+    description:
+        'Un perro de raza Golden Retriever fue visto corriendo sin supervisión cerca del área de la piscina.',
+    date: DateTime.now().subtract(const Duration(days: 1)),
+    urgency: UrgencyLevel.baja,
+    reportedBy: 'Carlos Rojas',
+  ),
+  SecurityIncident(
+    id: '3',
+    title: 'Intento de acceso no autorizado',
+    description:
+        'Un individuo desconocido intentó ingresar por la puerta trasera sin registrarse. Fue interceptado.',
+    date: DateTime.now().subtract(const Duration(minutes: 25)),
+    urgency: UrgencyLevel.alta,
+    reportedBy: 'Guardia B',
+  ),
+];
