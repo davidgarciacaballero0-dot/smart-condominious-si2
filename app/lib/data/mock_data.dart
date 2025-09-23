@@ -26,6 +26,8 @@ final List<VisitorLog> mockVisitorLogs = [
     exitTime: DateTime.now().subtract(const Duration(days: 1, hours: -2)),
   ),
 ];
+
+// Lista de incidentes reportados manualmente
 final List<SecurityIncident> mockIncidents = [
   SecurityIncident(
     id: '1',
@@ -53,5 +55,27 @@ final List<SecurityIncident> mockIncidents = [
     date: DateTime.now().subtract(const Duration(minutes: 25)),
     urgency: UrgencyLevel.alta,
     reportedBy: 'Guardia B',
+  ),
+];
+
+// --- LISTA FALTANTE AÑADIDA ---
+final List<SecurityIncident> mockAiAlerts = [
+  SecurityIncident(
+    id: 'ai1',
+    title: 'Persona no reconocida detectada',
+    description:
+        'Una persona no registrada en la base de datos fue detectada por la cámara 3 intentando acceder al área de la piscina fuera del horario permitido.',
+    date: DateTime.now().subtract(const Duration(minutes: 5)),
+    urgency: UrgencyLevel.alta,
+    reportedBy: 'IA - Cámara 3',
+  ),
+  SecurityIncident(
+    id: 'ai2',
+    title: 'Vehículo con placa no autorizada',
+    description:
+        'El vehículo con placa "9876XYZ" intentó ingresar por la puerta principal. La placa no coincide con ningún vehículo de residente registrado.',
+    date: DateTime.now().subtract(const Duration(minutes: 45)),
+    urgency: UrgencyLevel.media,
+    reportedBy: 'IA - OCR Garita',
   ),
 ];
