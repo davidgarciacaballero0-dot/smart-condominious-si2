@@ -1,28 +1,88 @@
-// --- SECCIÓN DE IMPORTACIONES COMPLETAS ---
-import 'package:app/ai_alerts_page.dart';
-import 'package:app/data/mock_data.dart';
-import 'package:app/incident_history_page.dart';
-import 'package:app/quick_action_button.dart';
-import 'package:app/report_incident_page.dart';
-import 'package:app/visitor_exit_page.dart';
-import 'package:flutter/material.dart';
-import 'package:app/login_page.dart';
-import 'package:app/visitor_log_page.dart';
-import 'package:app/visitor_history_page.dart';
+import 'package:flutter/material.dart'
+    show
+        AppBar,
+        BuildContext,
+        Card,
+        Chip,
+        Color,
+        Colors,
+        EdgeInsets,
+        FontWeight,
+        Icon,
+        IconButton,
+        IconData,
+        Icons,
+        ListTile,
+        ListView,
+        MaterialPageRoute,
+        Navigator,
+        Route,
+        Scaffold,
+        State,
+        StatefulWidget,
+        Text,
+        TextDecoration,
+        TextStyle,
+        Tooltip,
+        Widget;
+import 'package:intl/intl.dart';
+import 'data/mock_data.dart'; // Importamos nuestros datos de prueba
+import 'login_page.dart';
+import 'models/maintenance_task_model.dart'; // Importamos el modelo de tareas
+import 'maintenance_task_detail_page.dart'; // Importamos la página de detalle
 
-class SecurityDashboardPage extends StatelessWidget {
-  const SecurityDashboardPage({super.key});
+class MaintenanceDashboardPage extends StatefulWidget {
+  const MaintenanceDashboardPage({super.key});
+
+  @override
+  State<MaintenanceDashboardPage> createState() =>
+      _MaintenanceDashboardPageState();
+}
+
+class _MaintenanceDashboardPageState extends State<MaintenanceDashboardPage> {
+  // Función para obtener el estilo visual según la prioridad de la tarea
+  (Color, IconData) _getPriorityStyle(TaskPriority priority) {
+    switch (priority) {
+      case TaskPriority.baja:
+        return (Colors.green, Icons.arrow_downward);
+      case TaskPriority.media:
+        return (Colors.orange, Icons.remove);
+      case TaskPriority.alta:
+        return (Colors.red, Icons.arrow_upward);
+    }
+  }
+
+  // Función para obtener el texto y color del estado de la tarea
+  (String, Color) _getStatusStyle(TaskStatus status) {
+    switch (status) {
+      case TaskStatus.pendiente:
+        return ('Pendiente', Colors.grey.shade700);
+      case TaskStatus.enProgreso:
+        return ('En Progreso', Colors.blue.shade700);
+      case TaskStatus.completada:
+        return ('Completada', Colors.green.shade800);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Calculamos los datos para el panel de estado
-    final currentVisitorsCount =
-        mockVisitorLogs.where((log) => log.exitTime == null).length;
-    final newAlertsCount = mockAiAlerts.length;
+    // Ordenamos las tareas para que las pendientes y en progreso aparezcan primero
+    final sortedTasks = List<MaintenanceTask>.from(mockMaintenanceTasks)
+      ..sort((a, b) {
+        if (a.status == TaskStatus.completada &&
+            b.status != TaskStatus.completada) {
+          return 1;
+        }
+        if (a.status != TaskStatus.completada &&
+            b.status == TaskStatus.completada) {
+          return -1;
+        }
+        return b.dateReported.compareTo(a.dateReported);
+      });
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Centro de Seguridad'),
+        title: const Text('Tareas de Mantenimiento'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -37,247 +97,58 @@ class SecurityDashboardPage extends StatelessWidget {
           ),
         ],
       ),
-      drawer: const SecurityDrawer(),
-      body: SingleChildScrollView(
+      body: ListView.builder(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Acciones Rápidas',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                QuickActionButton(
-                  title: 'Registrar\nEntrada',
-                  icon: Icons.person_add_alt_1,
-                  color: Colors.green,
-                  onTap: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const VisitorLogPage()));
-                  },
-                ),
-                const SizedBox(width: 16),
-                QuickActionButton(
-                  title: 'Registrar\nSalida',
-                  icon: Icons.logout,
-                  color: Colors.redAccent,
-                  onTap: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const VisitorExitPage()));
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Estado Actual',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              elevation: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildStatusColumn(
-                        context, '$currentVisitorsCount', 'Visitantes Dentro'),
-                    _buildStatusColumn(
-                        context, '$newAlertsCount', 'Alertas Nuevas',
-                        isAlert: true),
-                  ],
+        itemCount: sortedTasks.length,
+        itemBuilder: (context, index) {
+          final task = sortedTasks[index];
+          final (priorityColor, priorityIcon) =
+              _getPriorityStyle(task.priority);
+          final (statusText, statusColor) = _getStatusStyle(task.status);
+
+          return Card(
+            elevation: 2.0,
+            margin: const EdgeInsets.only(bottom: 16.0),
+            child: ListTile(
+              leading: Tooltip(
+                message: 'Prioridad ${task.priority.name}',
+                child: Icon(priorityIcon, color: priorityColor, size: 30),
+              ),
+              title: Text(
+                task.title,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  decoration: task.status == TaskStatus.completada
+                      ? TextDecoration.lineThrough
+                      : TextDecoration.none,
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Atajos',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            if (mockAiAlerts.isNotEmpty)
-              _buildShortcutTile(
-                context,
-                icon: Icons.notifications_active,
-                iconColor: Colors.red,
-                title: 'Última Alerta IA',
-                subtitle: mockAiAlerts.last.title,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const AiAlertsPage()),
-                  );
-                },
+              subtitle: Text(
+                'Reportado: ${DateFormat('dd/MM/yyyy').format(task.dateReported)}',
               ),
-            if (mockIncidents.isNotEmpty)
-              _buildShortcutTile(
-                context,
-                icon: Icons.report,
-                iconColor: Colors.orange,
-                title: 'Último Incidente Reportado',
-                subtitle: mockIncidents.last.title,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const IncidentHistoryPage()),
-                  );
-                },
+              trailing: Chip(
+                label: Text(
+                  statusText,
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+                backgroundColor: statusColor,
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusColumn(BuildContext context, String value, String label,
-      {bool isAlert = false}) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: isAlert ? Colors.red : Theme.of(context).colorScheme.primary,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 14, color: Colors.grey),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildShortcutTile(BuildContext context,
-      {required IconData icon,
-      required Color iconColor,
-      required String title,
-      required String subtitle,
-      required VoidCallback onTap}) {
-    return Card(
-      elevation: 2,
-      child: ListTile(
-        leading: Icon(icon, color: iconColor, size: 30),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(subtitle, overflow: TextOverflow.ellipsis),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: onTap,
-      ),
-    );
-  }
-}
-
-class SecurityDrawer extends StatelessWidget {
-  const SecurityDrawer({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: <Widget>[
-          UserAccountsDrawerHeader(
-            accountName: const Text('Carlos Rojas',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            accountEmail: const Text('Personal de Seguridad'),
-            currentAccountPicture: const CircleAvatar(
-                child: Icon(Icons.security_outlined, size: 50)),
-            decoration:
-                BoxDecoration(color: Theme.of(context).colorScheme.primary),
-          ),
-          ListTile(
-            leading: const Icon(Icons.dashboard_outlined),
-            title: const Text('Dashboard'),
-            onTap: () => Navigator.pop(context),
-          ),
-          const Divider(),
-          const Padding(
-            padding: EdgeInsets.only(left: 16.0, top: 16.0, bottom: 8.0),
-            child: Text('Gestión de Visitas',
-                style:
-                    TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-          ),
-          ListTile(
-            leading: const Icon(Icons.view_list_outlined),
-            title: const Text('Historial de Visitas'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const VisitorHistoryPage()),
-              );
-            },
-          ),
-          const Divider(),
-          const Padding(
-            padding: EdgeInsets.only(left: 16.0, top: 16.0, bottom: 8.0),
-            child: Text('Gestión de Incidentes',
-                style:
-                    TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-          ),
-          ListTile(
-            leading: const Icon(Icons.report_problem_outlined),
-            title: const Text('Reportar Incidente'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const ReportIncidentPage()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.history_outlined),
-            title: const Text('Historial de Incidentes'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const IncidentHistoryPage()),
-              );
-            },
-          ),
-          const Divider(),
-          const Padding(
-            padding: EdgeInsets.only(left: 16.0, top: 16.0, bottom: 8.0),
-            child: Text('Vigilancia',
-                style:
-                    TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-          ),
-          ListTile(
-            leading: const Icon(Icons.notifications_active_outlined),
-            title: const Text('Revisar Alertas de IA'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AiAlertsPage()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.camera_outdoor_outlined),
-            title: const Text('Ver Cámaras'),
-            onTap: () {
-              // Lógica futura
-            },
-          ),
-        ],
+              onTap: () async {
+                // Navegamos a la pantalla de detalle y esperamos a que se cierre
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MaintenanceTaskDetailPage(task: task),
+                  ),
+                );
+                // Cuando volvemos, llamamos a setState para refrescar la lista
+                setState(() {});
+              },
+            ),
+          );
+        },
       ),
     );
   }

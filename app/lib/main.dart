@@ -1,3 +1,6 @@
+// ignore_for_file: unused_import, unnecessary_const
+
+import 'package:app/dashboard_page.dart';
 import 'package:app/theme.dart';
 import 'package:flutter/material.dart';
 import 'login_page.dart';
@@ -16,11 +19,12 @@ class SmartCondominiumApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const loginPage = const LoginPage();
     return MaterialApp(
       title: 'Smart Condominium',
       debugShowCheckedModeBanner: false,
       theme: appTheme,
-      home: const LoginPage(),
+      home: loginPage,
     );
   }
 }
