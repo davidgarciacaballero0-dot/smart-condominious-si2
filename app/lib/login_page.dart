@@ -1,9 +1,9 @@
 // ignore_for_file: unused_import, deprecated_member_use, undefined_hidden_name
 
+import 'package:app/security_dashboard_page.dart';
 import 'package:flutter/material.dart';
 import 'dashboard_page.dart';
 import 'models/profile_models.dart';
-import 'security_dashboard_page.dart' hide Text, ElevatedButton;
 import 'maintenance_dashboard_page.dart';
 
 class LoginPage extends StatefulWidget {
