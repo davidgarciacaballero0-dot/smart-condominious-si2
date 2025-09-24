@@ -1,7 +1,8 @@
+import 'package:app/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'models/payment_model.dart';
 import 'payment_detail_page.dart';
-import 'package:intl/intl.dart'; // Importamos el paquete para formatear la fecha y hora
+import 'package:intl/intl.dart';
 
 class FinancesPage extends StatefulWidget {
   const FinancesPage({super.key});
@@ -13,51 +14,15 @@ class FinancesPage extends StatefulWidget {
 class _FinancesPageState extends State<FinancesPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
-  final List<Payment> _payments = [
-    Payment(
-        id: '1',
-        concept: 'Expensas Septiembre 2025',
-        amount: 550.00,
-        dueDate: DateTime(2025, 9, 10),
-        status: PaymentStatus.pagado,
-        paymentDate: DateTime(2025, 9, 5, 10, 30),
-        type: PaymentType.expensa),
-    Payment(
-        id: '2',
-        concept: 'Expensas Agosto 2025',
-        amount: 550.00,
-        dueDate: DateTime(2025, 8, 10),
-        status: PaymentStatus.pagado,
-        paymentDate: DateTime(2025, 8, 8, 15, 45),
-        type: PaymentType.expensa),
-    Payment(
-        id: '3',
-        concept: 'Expensas Octubre 2025',
-        amount: 560.50,
-        dueDate: DateTime(2025, 10, 10),
-        status: PaymentStatus.pendiente,
-        type: PaymentType.expensa),
-    Payment(
-        id: '4',
-        concept: 'Reserva Salón de Eventos',
-        amount: 200.00,
-        dueDate: DateTime(2025, 10, 15),
-        status: PaymentStatus.pendiente,
-        type: PaymentType.servicio),
-    Payment(
-        id: '5',
-        concept: 'Expensas Julio 2025',
-        amount: 540.00,
-        dueDate: DateTime(2025, 7, 10),
-        status: PaymentStatus.vencido,
-        type: PaymentType.expensa),
-  ];
+  final ApiService _apiService = ApiService();
+  Future<List<Payment>>? _paymentsFuture;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    // Iniciamos la carga de datos
+    _paymentsFuture = _apiService.getFinancialFees();
   }
 
   @override
@@ -68,14 +33,6 @@ class _FinancesPageState extends State<FinancesPage>
 
   @override
   Widget build(BuildContext context) {
-    final pendingPayments = _payments
-        .where((p) =>
-            p.status == PaymentStatus.pendiente ||
-            p.status == PaymentStatus.vencido)
-        .toList();
-    final paidPayments =
-        _payments.where((p) => p.status == PaymentStatus.pagado).toList();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mis Finanzas'),
@@ -86,39 +43,67 @@ class _FinancesPageState extends State<FinancesPage>
           indicatorColor: Colors.white,
           tabs: const [
             Tab(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.hourglass_empty_rounded, size: 20),
-                  SizedBox(width: 8),
-                  Text('Pagos Pendientes'),
-                ],
-              ),
-            ),
+                child:
+                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Icon(Icons.hourglass_empty_rounded, size: 20),
+              SizedBox(width: 8),
+              Text('Pendientes')
+            ])),
             Tab(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                   Icon(Icons.history_rounded, size: 20),
                   SizedBox(width: 8),
-                  Text('Historial de Pagos'),
-                ],
-              ),
-            ),
+                  Text('Historial')
+                ])),
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          PaymentListView(payments: pendingPayments),
-          PaymentListView(payments: paidPayments),
-        ],
+      body: FutureBuilder<List<Payment>>(
+        future: _paymentsFuture,
+        builder: (context, snapshot) {
+          // Mientras carga, muestra un spinner
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          // Si hay un error, muestra un mensaje
+          if (snapshot.hasError) {
+            return Center(
+                child: Text('Error al cargar los datos: ${snapshot.error}'));
+          }
+          // Si no hay datos, muestra un mensaje
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+                child: Text('No se encontraron registros de pago.'));
+          }
+
+          // Si todo está bien, filtramos y mostramos los datos
+          final allPayments = snapshot.data!;
+          final pendingPayments = allPayments
+              .where((p) =>
+                  p.status == PaymentStatus.pendiente ||
+                  p.status == PaymentStatus.vencido)
+              .toList();
+          final paidPayments = allPayments
+              .where((p) => p.status == PaymentStatus.pagado)
+              .toList();
+
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              PaymentListView(payments: pendingPayments),
+              PaymentListView(payments: paidPayments),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
+// Los widgets PaymentListView y PaymentListItem no necesitan grandes cambios,
+// solo asegúrate de que usan el modelo actualizado (id como int, etc.).
 class PaymentListView extends StatelessWidget {
   final List<Payment> payments;
   const PaymentListView({super.key, required this.payments});
@@ -126,23 +111,17 @@ class PaymentListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (payments.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Text(
-            'No hay pagos en esta sección.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ),
-      );
+      return const Center(
+          child: Padding(
+              padding: EdgeInsets.all(24.0),
+              child: Text('No hay pagos en esta sección.',
+                  textAlign: TextAlign.center)));
     }
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
       itemCount: payments.length,
       itemBuilder: (context, index) {
-        final payment = payments[index];
-        return PaymentListItem(payment: payment);
+        return PaymentListItem(payment: payments[index]);
       },
     );
   }
@@ -152,8 +131,7 @@ class PaymentListItem extends StatelessWidget {
   final Payment payment;
   const PaymentListItem({super.key, required this.payment});
 
-  (Color, IconData) _getStatusStyle(
-      PaymentStatus status, BuildContext context) {
+  (Color, IconData) _getStatusStyle(PaymentStatus status) {
     switch (status) {
       case PaymentStatus.pagado:
         return (Colors.green, Icons.check_circle);
@@ -166,8 +144,7 @@ class PaymentListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final (statusColor, statusIcon) = _getStatusStyle(payment.status, context);
+    final (statusColor, statusIcon) = _getStatusStyle(payment.status);
     final isPending = payment.status != PaymentStatus.pagado;
 
     return Card(
@@ -181,11 +158,9 @@ class PaymentListItem extends StatelessWidget {
       child: InkWell(
         onTap: () {
           Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PaymentDetailPage(payment: payment),
-            ),
-          );
+              context,
+              MaterialPageRoute(
+                  builder: (context) => PaymentDetailPage(payment: payment)));
         },
         borderRadius: BorderRadius.circular(12.0),
         child: Padding(
@@ -198,34 +173,21 @@ class PaymentListItem extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      payment.concept,
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight:
-                            isPending ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
+                    Text(payment.concept,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(
+                                fontWeight: isPending
+                                    ? FontWeight.bold
+                                    : FontWeight.normal)),
+                    const SizedBox(height: 4.0),
+                    Text('Monto: Bs. ${payment.amount.toStringAsFixed(2)}',
+                        style: Theme.of(context).textTheme.bodyLarge),
                     const SizedBox(height: 4.0),
                     Text(
-                      'Monto: Bs. ${payment.amount.toStringAsFixed(2)}',
-                      style: textTheme.bodyLarge,
-                    ),
-                    const SizedBox(height: 4.0),
-                    // --- CAMBIO REALIZADO AQUÍ ---
-                    // Si el pago está realizado, muestra la fecha y hora del pago.
-                    // Si no, muestra la fecha de vencimiento.
-                    if (payment.status == PaymentStatus.pagado &&
-                        payment.paymentDate != null)
-                      Text(
-                        'Pagado: ${DateFormat('dd/MM/yyyy HH:mm').format(payment.paymentDate!)} hrs',
-                        style: textTheme.bodyMedium
-                            ?.copyWith(color: Colors.green.shade800),
-                      )
-                    else
-                      Text(
                         'Vence: ${DateFormat('dd/MM/yyyy').format(payment.dueDate)}',
-                        style: textTheme.bodyMedium,
-                      ),
+                        style: Theme.of(context).textTheme.bodyMedium),
                   ],
                 ),
               ),

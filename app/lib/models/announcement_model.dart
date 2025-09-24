@@ -1,11 +1,11 @@
 class Announcement {
-  final String id;
+  final int id;
   final String title;
   final String content;
   final DateTime date;
-  final String author;
-  bool isImportant; // Si es un comunicado prioritario
-  bool isRead; // Si el usuario ya lo leyó
+  final String author; // En el backend, esto es el nombre del creador
+  bool isImportant;
+  bool isRead; // Este campo lo manejaremos localmente en la app
 
   Announcement({
     required this.id,
@@ -13,7 +13,18 @@ class Announcement {
     required this.content,
     required this.date,
     required this.author,
-    this.isImportant = false, // Por defecto, no es importante
-    this.isRead = false, // Por defecto, no está leído
+    this.isImportant = false,
+    this.isRead = false,
   });
+
+  factory Announcement.fromJson(Map<String, dynamic> json) {
+    return Announcement(
+      id: json['id'],
+      title: json['title'],
+      content: json['content'],
+      date: DateTime.parse(json['created_at']),
+      author: json['created_by_details']?['full_name'] ?? 'Administración',
+      // El backend no tiene 'isImportant', lo asumimos como falso por ahora
+    );
+  }
 }

@@ -1,10 +1,10 @@
+import 'package:app/models/maintenance_task_model.dart';
+import 'package:app/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'models/maintenance_task_model.dart';
 
 class MaintenanceTaskDetailPage extends StatefulWidget {
   final MaintenanceTask task;
-
   const MaintenanceTaskDetailPage({super.key, required this.task});
 
   @override
@@ -13,12 +13,65 @@ class MaintenanceTaskDetailPage extends StatefulWidget {
 }
 
 class _MaintenanceTaskDetailPageState extends State<MaintenanceTaskDetailPage> {
+  final ApiService _apiService = ApiService();
   late TaskStatus _currentStatus;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _currentStatus = widget.task.status;
+  }
+
+  Future<void> _updateTaskStatus(TaskStatus newStatus) async {
+    setState(() => _isLoading = true);
+    try {
+      // Convertimos nuestro enum a el string que espera el backend
+      String statusString = newStatus
+          .toString()
+          .split('.')
+          .last
+          .replaceFirst('enProgreso', 'in_progress')
+          .replaceFirst('completada', 'completed');
+
+      final success =
+          await _apiService.updateTaskStatus(widget.task.id, statusString);
+
+      if (success && mounted) {
+        setState(() {
+          _currentStatus = newStatus;
+          widget.task.status =
+              newStatus; // Actualizamos el objeto original también
+        });
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Estado actualizado con éxito'),
+            backgroundColor: Colors.green));
+      } else {
+        _showErrorDialog('No se pudo actualizar el estado.');
+      }
+    } catch (e) {
+      _showErrorDialog('Error: ${e.toString()}');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    if (mounted) {
+      showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+                title: const Text('Error'),
+                content: Text(message),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cerrar'))
+                ],
+              ));
+    }
   }
 
   (Color, IconData) _getPriorityStyle(TaskPriority priority) {
@@ -30,19 +83,6 @@ class _MaintenanceTaskDetailPageState extends State<MaintenanceTaskDetailPage> {
       case TaskPriority.alta:
         return (Colors.red, Icons.arrow_upward);
     }
-  }
-
-  void _updateTaskStatus(TaskStatus newStatus) {
-    setState(() {
-      widget.task.status = newStatus;
-      _currentStatus = newStatus;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Tarea actualizada a "${_getStatusText(newStatus)}"'),
-        backgroundColor: Colors.green,
-      ),
-    );
   }
 
   String _getStatusText(TaskStatus status) {
@@ -83,8 +123,8 @@ class _MaintenanceTaskDetailPageState extends State<MaintenanceTaskDetailPage> {
                 'Reportado',
                 DateFormat('dd/MM/yyyy HH:mm')
                     .format(widget.task.dateReported)),
-            _buildDetailRow(
-                Icons.person_outline, 'Asignado a', widget.task.assignedTo),
+            _buildDetailRow(Icons.person_outline, 'Asignado a',
+                widget.task.assignedTo ?? 'N/A'),
             _buildDetailRow(Icons.info_outline, 'Estado Actual',
                 _getStatusText(_currentStatus)),
             const Divider(height: 32),
@@ -93,7 +133,9 @@ class _MaintenanceTaskDetailPageState extends State<MaintenanceTaskDetailPage> {
             const SizedBox(height: 8),
             Text(widget.task.description, style: const TextStyle(fontSize: 16)),
             const SizedBox(height: 40),
-            if (_currentStatus != TaskStatus.completada)
+            if (_isLoading)
+              const Center(child: CircularProgressIndicator())
+            else if (_currentStatus != TaskStatus.completada)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -143,16 +185,13 @@ class _MaintenanceTaskDetailPageState extends State<MaintenanceTaskDetailPage> {
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.grey[600]),
-          const SizedBox(width: 16),
-          Text('$label: ',
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          Expanded(child: Text(value, style: const TextStyle(fontSize: 16))),
-        ],
-      ),
+      child: Row(children: [
+        Icon(icon, color: Colors.grey[600]),
+        const SizedBox(width: 16),
+        Text('$label: ',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Expanded(child: Text(value, style: const TextStyle(fontSize: 16))),
+      ]),
     );
   }
 }

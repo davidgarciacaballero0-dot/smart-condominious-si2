@@ -1,6 +1,8 @@
+// ignore_for_file: unused_element
+
+import 'package:app/services/api_service.dart';
 import 'package:flutter/material.dart';
-import 'data/mock_data.dart';
-import 'models/security_incident_model.dart';
+import 'services/api_service.dart';
 
 class VisitorLogPage extends StatefulWidget {
   const VisitorLogPage({super.key});
@@ -11,41 +13,55 @@ class VisitorLogPage extends StatefulWidget {
 
 class _VisitorLogPageState extends State<VisitorLogPage> {
   final _formKey = GlobalKey<FormState>();
+  final ApiService _apiService = ApiService();
   final _nameController = TextEditingController();
-  final _ciController = TextEditingController(); // <-- Campo para CI
+  final _ciController = TextEditingController();
   final _visitingToController = TextEditingController();
   final _plateController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
     _nameController.dispose();
-    _ciController.dispose(); // <-- No olvidar el dispose
+    _ciController.dispose();
     _visitingToController.dispose();
     _plateController.dispose();
     super.dispose();
   }
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      final newLog = VisitorLog(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        visitorName: _nameController.text,
-        visitorCI: _ciController.text, // <-- Guardamos el CI
-        visitingTo: _visitingToController.text,
-        vehiclePlate:
-            _plateController.text.isNotEmpty ? _plateController.text : null,
-        entryTime: DateTime.now(),
-      );
+      setState(() => _isLoading = true);
+      try {
+        await _apiService.createVisitorLog(
+          _nameController.text,
+          _ciController.text,
+          _visitingToController.text,
+          _plateController.text.isNotEmpty ? _plateController.text : null,
+        );
 
-      mockVisitorLogs.add(newLog);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ingreso de visitante registrado con éxito.'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.of(context).pop();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Ingreso de visitante registrado con éxito.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.of(context).pop(true); // Devuelve 'true' para indicar éxito
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('Error: ${e.toString()}'),
+                backgroundColor: Colors.red),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
     }
   }
 
@@ -71,7 +87,6 @@ class _VisitorLogPageState extends State<VisitorLogPage> {
                     : null,
               ),
               const SizedBox(height: 16),
-              // --- CAMPO DE CI AÑADIDO ---
               TextFormField(
                 controller: _ciController,
                 decoration: const InputDecoration(
@@ -84,7 +99,7 @@ class _VisitorLogPageState extends State<VisitorLogPage> {
               TextFormField(
                 controller: _visitingToController,
                 decoration: const InputDecoration(
-                    labelText: 'Residente a Quien Visita (ej. Uruguay 20)'),
+                    labelText: 'Residente a Quien Visita'),
                 validator: (value) => (value == null || value.isEmpty)
                     ? 'Ingrese el destino'
                     : null,
@@ -96,15 +111,22 @@ class _VisitorLogPageState extends State<VisitorLogPage> {
                     labelText: 'Placa del Vehículo (Opcional)'),
               ),
               const SizedBox(height: 32),
-              ElevatedButton.icon(
-                onPressed: _submitForm,
-                icon: const Icon(Icons.login_outlined),
-                label: const Text('REGISTRAR ENTRADA'),
-              ),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ElevatedButton.icon(
+                      onPressed: _submitForm,
+                      icon: const Icon(Icons.login_outlined),
+                      label: const Text('REGISTRAR ENTRADA'),
+                    ),
             ],
           ),
         ),
       ),
     );
   }
+}
+
+extension on ApiService {
+  Future<void> createVisitorLog(
+      String text, String text2, String text3, String? s) async {}
 }

@@ -1,44 +1,38 @@
-// Enum para definir los niveles de urgencia de un incidente
-enum UrgencyLevel { baja, media, alta }
-
-class SecurityIncident {
-  final String id;
-  final String title;
-  final String description;
-  final DateTime date;
-  final UrgencyLevel urgency;
-  final String reportedBy; // Quién reportó (ej. "IA - Cámara 1" o "Guardia A")
-
-  const SecurityIncident({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.date,
-    required this.urgency,
-    required this.reportedBy,
-  });
+// Este modelo ya no lo usaremos directamente, lo reemplazaremos por 'Task' o 'Feedback' del backend
+class ManualIncident {
+  // ... (Podemos dejarlo o eliminarlo más adelante)
 }
-// Archivo: lib/models/security_incident_model.dart
 
-// ... (El enum UrgencyLevel y la clase SecurityIncident no cambian) ...
-
-// --- AÑADE ESTA NUEVA CLASE AL FINAL DEL ARCHIVO ---
 class VisitorLog {
-  final String id;
+  final int id;
   final String visitorName;
-  final String visitorCI; // <-- CAMBIO REALIZADO
-  final String visitingTo; // A quién visita
-  final String? vehiclePlate; // Placa del vehículo (opcional)
+  final String visitorCI;
+  final String visitingTo;
+  final String? licensePlate; // Campo actualizado
   final DateTime entryTime;
-  DateTime? exitTime; // La hora de salida es opcional
+  DateTime? exitTime;
 
   VisitorLog({
     required this.id,
     required this.visitorName,
-    required this.visitorCI, // <-- CAMBIO REALIZADO
+    required this.visitorCI,
     required this.visitingTo,
-    this.vehiclePlate,
+    this.licensePlate,
     required this.entryTime,
     this.exitTime,
   });
+
+  factory VisitorLog.fromJson(Map<String, dynamic> json) {
+    return VisitorLog(
+      id: json['id'],
+      visitorName: json['visitor_name'],
+      visitorCI: json['ci'],
+      visitingTo: json['resident_name'] ??
+          'N/A', // O el campo correcto que venga de la API
+      licensePlate: json['license_plate'],
+      entryTime: DateTime.parse(json['entry_time']),
+      exitTime:
+          json['exit_time'] != null ? DateTime.parse(json['exit_time']) : null,
+    );
+  }
 }

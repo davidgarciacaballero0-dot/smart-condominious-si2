@@ -1,6 +1,9 @@
+import 'package:app/add_edit_vehicle_page.dart';
+import 'package:app/models/profile_models.dart';
+import 'package:app/services/api_service.dart';
 import 'package:flutter/material.dart';
-import 'models/profile_models.dart';
-import 'add_edit_vehicle_page.dart'; // <-- IMPORTAMOS LA PÁGINA DEL FORMULARIO
+
+// CORREGIDO: Ajustamos la ruta del modelo y eliminamos importaciones duplicadas
 
 class VehicleManagementPage extends StatefulWidget {
   const VehicleManagementPage({super.key});
@@ -10,52 +13,58 @@ class VehicleManagementPage extends StatefulWidget {
 }
 
 class _VehicleManagementPageState extends State<VehicleManagementPage> {
-  // Datos de prueba
-  final List<Vehicle> _vehicles = [
-    const Vehicle(
-        id: '1',
-        brand: 'Toyota',
-        model: 'Corolla',
-        plate: '2457GTH',
-        color: 'Plata'),
-    const Vehicle(
-        id: '2',
-        brand: 'Nissan',
-        model: 'Versa',
-        plate: '3829POK',
-        color: 'Rojo'),
-  ];
+  final ApiService _apiService = ApiService();
+  late Future<List<Vehicle>> _vehiclesFuture;
 
-  // --- LÓGICA ACTUALIZADA PARA ABRIR EL FORMULARIO ---
+  @override
+  void initState() {
+    super.initState();
+    _loadVehicles();
+  }
+
+  void _loadVehicles() {
+    setState(() {
+      _vehiclesFuture = _apiService.getVehicles();
+    });
+  }
+
   void _addOrEditVehicle({Vehicle? vehicle}) async {
-    // Navegamos al formulario y esperamos el resultado
-    final result = await Navigator.of(context).push<Vehicle>(
+    final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (context) => AddEditVehiclePage(vehicle: vehicle),
       ),
     );
-
-    // Si el formulario nos devuelve un vehículo (es decir, se guardó), actualizamos la lista
-    if (result != null) {
-      setState(() {
-        if (vehicle != null) {
-          // Editando: Buscamos el índice y reemplazamos
-          final index = _vehicles.indexWhere((v) => v.id == result.id);
-          _vehicles[index] = result;
-        } else {
-          // Añadiendo: Simplemente lo agregamos a la lista
-          _vehicles.add(result);
-        }
-      });
+    if (result == true) {
+      _loadVehicles();
     }
   }
 
-  void _deleteVehicle(String id) {
-    setState(() {
-      _vehicles.removeWhere((v) => v.id == id);
-    });
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Vehículo eliminado')));
+  void _deleteVehicle(int id) async {
+    try {
+      final success = await _apiService.deleteVehicle(id);
+
+      // --- CORRECCIÓN AQUÍ ---
+      // Verificamos que el widget siga en pantalla antes de usar su context.
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Vehículo eliminado con éxito'),
+              backgroundColor: Colors.green));
+          _loadVehicles(); // Recargamos la lista
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('No se pudo eliminar el vehículo'),
+              backgroundColor: Colors.red));
+        }
+      }
+    } catch (e) {
+      // --- CORRECCIÓN AQUÍ ---
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red));
+      }
+    }
   }
 
   @override
@@ -64,32 +73,52 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
       appBar: AppBar(
         title: const Text('Gestionar Vehículos'),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: _vehicles.length,
-        itemBuilder: (context, index) {
-          final vehicle = _vehicles[index];
-          return Card(
-            child: ListTile(
-              leading: const Icon(Icons.directions_car, size: 40),
-              title: Text('${vehicle.brand} ${vehicle.model}',
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle:
-                  Text('Placa: ${vehicle.plate}\nColor: ${vehicle.color}'),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, color: Colors.blue),
-                    onPressed: () => _addOrEditVehicle(vehicle: vehicle),
+      body: FutureBuilder<List<Vehicle>>(
+        future: _vehiclesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(
+                child: Text('Error al cargar vehículos: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+                child: Text('No tienes vehículos registrados.'));
+          }
+
+          final vehicles = snapshot.data!;
+          return ListView.builder(
+            padding: const EdgeInsets.all(16.0),
+            itemCount: vehicles.length,
+            itemBuilder: (context, index) {
+              final vehicle = vehicles[index];
+              return Card(
+                child: ListTile(
+                  leading: const Icon(Icons.directions_car, size: 40),
+                  title: Text('${vehicle.brand} ${vehicle.model}',
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text(
+                      'Placa: ${vehicle.licensePlate}\nColor: ${vehicle.color}'),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon:
+                            const Icon(Icons.edit_outlined, color: Colors.blue),
+                        onPressed: () => _addOrEditVehicle(vehicle: vehicle),
+                      ),
+                      IconButton(
+                        icon:
+                            const Icon(Icons.delete_outline, color: Colors.red),
+                        onPressed: () => _deleteVehicle(vehicle.id),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.red),
-                    onPressed: () => _deleteVehicle(vehicle.id),
-                  ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           );
         },
       ),

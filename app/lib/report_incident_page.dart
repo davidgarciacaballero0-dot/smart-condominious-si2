@@ -1,19 +1,23 @@
+// ignore_for_file: deprecated_member_use
+
+import 'package:app/services/api_service.dart';
 import 'package:flutter/material.dart';
-import 'models/security_incident_model.dart'; // Importamos el modelo que creamos
-import 'data/mock_data.dart'; // <-- 1. AÑADE ESTA IMPORTACIÓN
+import 'models/maintenance_task_model.dart'; // Usamos el modelo de Tarea
+import 'services/api_service.dart';
 
 class ReportIncidentPage extends StatefulWidget {
   const ReportIncidentPage({super.key});
-
   @override
   State<ReportIncidentPage> createState() => _ReportIncidentPageState();
 }
 
 class _ReportIncidentPageState extends State<ReportIncidentPage> {
   final _formKey = GlobalKey<FormState>();
+  final ApiService _apiService = ApiService();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  UrgencyLevel _selectedUrgency = UrgencyLevel.media; // Valor por defecto
+  String _selectedPriority = 'media'; // Valor por defecto
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -22,36 +26,40 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
     super.dispose();
   }
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      final incident = SecurityIncident(
-        id: DateTime.now().toIso8601String(),
-        title: _titleController.text,
-        description: _descriptionController.text,
-        date: DateTime.now(),
-        urgency: _selectedUrgency,
-        reportedBy: 'Carlos Rojas', // Esto vendría del usuario logueado
-      );
-
-      // Añadimos el nuevo incidente a nuestra lista de datos
-      mockIncidents.add(incident);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Incidente reportado con éxito.'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.of(context).pop();
+      setState(() => _isLoading = true);
+      try {
+        await _apiService.createTask(
+          _titleController.text,
+          _descriptionController.text,
+          _selectedPriority,
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Incidente reportado con éxito.'),
+              backgroundColor: Colors.green));
+          Navigator.of(context)
+              .pop(true); // Devuelve true para recargar la lista anterior
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: Colors.red));
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reportar Incidente'),
-      ),
+      appBar: AppBar(title: const Text('Reportar Incidente')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Form(
@@ -68,19 +76,19 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                     : null,
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<UrgencyLevel>(
-                initialValue: _selectedUrgency,
+              DropdownButtonFormField<String>(
+                value: _selectedPriority,
                 decoration:
-                    const InputDecoration(labelText: 'Nivel de Urgencia'),
-                items: UrgencyLevel.values.map((UrgencyLevel level) {
-                  return DropdownMenuItem<UrgencyLevel>(
-                    value: level,
-                    child: Text(level.toString().split('.').last.toUpperCase()),
+                    const InputDecoration(labelText: 'Nivel de Prioridad'),
+                items: TaskPriority.values.map((priority) {
+                  return DropdownMenuItem<String>(
+                    value: priority.name,
+                    child: Text(priority.name.toUpperCase()),
                   );
                 }).toList(),
-                onChanged: (UrgencyLevel? newValue) {
+                onChanged: (String? newValue) {
                   setState(() {
-                    _selectedUrgency = newValue!;
+                    _selectedPriority = newValue!;
                   });
                 },
               ),
@@ -88,20 +96,21 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(
-                  labelText: 'Descripción detallada del incidente',
-                  alignLabelWithHint: true,
-                ),
+                    labelText: 'Descripción detallada del incidente',
+                    alignLabelWithHint: true),
                 maxLines: 5,
                 validator: (value) => (value == null || value.isEmpty)
                     ? 'Por favor, ingrese una descripción'
                     : null,
               ),
               const SizedBox(height: 32),
-              ElevatedButton.icon(
-                onPressed: _submitForm,
-                icon: const Icon(Icons.send_outlined),
-                label: const Text('ENVIAR REPORTE'),
-              ),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ElevatedButton.icon(
+                      onPressed: _submitForm,
+                      icon: const Icon(Icons.send_outlined),
+                      label: const Text('ENVIAR REPORTE'),
+                    ),
             ],
           ),
         ),

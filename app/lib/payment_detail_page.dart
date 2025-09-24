@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/payment_model.dart';
+import 'receipt_page.dart'; // <-- 1. IMPORTAMOS LA NUEVA PÁGINA
 
 class PaymentDetailPage extends StatelessWidget {
   final Payment payment;
@@ -13,8 +14,7 @@ class PaymentDetailPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-            'Detalle de ${payment.type == PaymentType.expensa ? "Expensa" : "Servicio"}'),
+        title: const Text('Detalle de Pago'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -27,9 +27,9 @@ class PaymentDetailPage extends StatelessWidget {
                 style: textTheme.titleLarge),
             const Divider(height: 48),
 
-            // ... (Aquí irían más detalles del pago)
+            // Más detalles podrían ir aquí...
 
-            const Spacer(), // Empuja el botón al final de la pantalla
+            const Spacer(),
             if (isPending)
               SizedBox(
                 width: double.infinity,
@@ -47,7 +47,15 @@ class PaymentDetailPage extends StatelessWidget {
                   label: const Text('VER COMPROBANTE'),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.grey.shade600),
-                  onPressed: () {/* Lógica para ver comprobante */},
+                  // --- 2. CONECTAMOS LA NAVEGACIÓN ---
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ReceiptPage(payment: payment),
+                      ),
+                    );
+                  },
                 ),
               ),
           ],
