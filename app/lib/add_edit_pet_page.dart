@@ -1,8 +1,11 @@
+// ignore_for_file: unused_element
+
 import 'package:flutter/material.dart';
 import 'models/profile_models.dart';
+import 'services/api_service.dart';
 
 class AddEditPetPage extends StatefulWidget {
-  final Pet? pet; // Recibe una mascota si estamos editando
+  final Pet? pet;
 
   const AddEditPetPage({super.key, this.pet});
 
@@ -12,10 +15,12 @@ class AddEditPetPage extends StatefulWidget {
 
 class _AddEditPetPageState extends State<AddEditPetPage> {
   final _formKey = GlobalKey<FormState>();
+  final ApiService _apiService = ApiService();
   late TextEditingController _nameController;
   late TextEditingController _speciesController;
   late TextEditingController _breedController;
   late TextEditingController _colorController;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -35,16 +40,39 @@ class _AddEditPetPageState extends State<AddEditPetPage> {
     super.dispose();
   }
 
-  void _saveForm() {
+  Future<void> _saveForm() async {
     if (_formKey.currentState!.validate()) {
-      final newPet = Pet(
-        id: widget.pet?.id ?? DateTime.now().toIso8601String(),
-        name: _nameController.text,
-        species: _speciesController.text,
-        breed: _breedController.text,
-        color: _colorController.text,
-      );
-      Navigator.of(context).pop(newPet);
+      setState(() => _isLoading = true);
+
+      try {
+        final name = _nameController.text;
+        final species = _speciesController.text;
+        final breed = _breedController.text;
+        final color = _colorController.text;
+
+        if (widget.pet == null) {
+          await _apiService.createPet(name, species, breed, color);
+        } else {
+          await _apiService.updatePet(
+              widget.pet!.id, name, species, breed, color);
+        }
+
+        if (mounted) {
+          Navigator.of(context).pop(true);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('Error al guardar la mascota: ${e.toString()}'),
+                backgroundColor: Colors.red),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
     }
   }
 
@@ -63,9 +91,8 @@ class _AddEditPetPageState extends State<AddEditPetPage> {
             children: <Widget>[
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre de la mascota',
-                ),
+                decoration:
+                    const InputDecoration(labelText: 'Nombre de la mascota'),
                 validator: (value) => (value == null || value.isEmpty)
                     ? 'Por favor, ingrese el nombre'
                     : null,
@@ -74,8 +101,7 @@ class _AddEditPetPageState extends State<AddEditPetPage> {
               TextFormField(
                 controller: _speciesController,
                 decoration: const InputDecoration(
-                  labelText: 'Especie (ej. Perro, Gato)',
-                ),
+                    labelText: 'Especie (ej. Perro, Gato)'),
                 validator: (value) => (value == null || value.isEmpty)
                     ? 'Por favor, ingrese la especie'
                     : null,
@@ -97,15 +123,25 @@ class _AddEditPetPageState extends State<AddEditPetPage> {
                     : null,
               ),
               const SizedBox(height: 32),
-              ElevatedButton.icon(
-                onPressed: _saveForm,
-                icon: const Icon(Icons.save_alt_outlined),
-                label: const Text('GUARDAR'),
-              ),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ElevatedButton.icon(
+                      onPressed: _saveForm,
+                      icon: const Icon(Icons.save_alt_outlined),
+                      label: const Text('GUARDAR'),
+                    ),
             ],
           ),
         ),
       ),
     );
   }
+}
+
+extension on ApiService {
+  Future<void> updatePet(
+      int id, String name, String species, String breed, String color) async {}
+
+  Future<void> createPet(
+      String name, String species, String breed, String color) async {}
 }

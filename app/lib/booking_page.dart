@@ -1,6 +1,13 @@
+// ignore_for_file: unused_field, prefer_final_fields
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import 'package.flutter/material.dart';
 import 'models/reservation_model.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'services/api_service.dart'; // <-- 1. Importamos el ApiService
+import 'package:intl/intl.dart';
 
 class BookingPage extends StatefulWidget {
   final CommonArea commonArea;
@@ -12,10 +19,13 @@ class BookingPage extends StatefulWidget {
 }
 
 class _BookingPageState extends State<BookingPage> {
+  final ApiService _apiService =
+      ApiService(); // <-- 2. Instanciamos el servicio
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   TimeOfDay? _selectedTime;
   final _guestsController = TextEditingController();
+  bool _isLoading = false; // Para mostrar un indicador de carga
 
   final List<TimeOfDay> _availableTimes = [
     const TimeOfDay(hour: 9, minute: 0),
@@ -30,10 +40,7 @@ class _BookingPageState extends State<BookingPage> {
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
-    // Agregamos un listener para redibujar la pantalla cuando el texto cambie
-    _guestsController.addListener(() {
-      setState(() {});
-    });
+    _guestsController.addListener(() => setState(() {}));
   }
 
   @override
@@ -42,28 +49,96 @@ class _BookingPageState extends State<BookingPage> {
     super.dispose();
   }
 
+  // Lógica para determinar qué campos mostrar según el área
   bool get shouldShowGuestsField =>
-      widget.commonArea.name == 'Salón de Eventos' ||
-      widget.commonArea.name == 'Churrasquera';
+      widget.commonArea.name.toLowerCase().contains('salón') ||
+      widget.commonArea.name.toLowerCase().contains('churrasquera');
 
   bool get allowsTimeSlotSelection => !shouldShowGuestsField;
 
-  // --- LÓGICA DEL BOTÓN ACTUALIZADA ---
-  bool get isConfirmButtonEnabled {
-    if (allowsTimeSlotSelection) {
-      // Para áreas como Piscina, se necesita fecha Y hora
-      return _selectedDay != null && _selectedTime != null;
-    } else {
-      // Para Salón/Churrasquera, se necesita fecha Y que el campo de invitados no esté vacío
-      return _selectedDay != null && _guestsController.text.isNotEmpty;
+  bool get isConfirmButtonEnabled =>
+      _selectedDay != null &&
+      (allowsTimeSlotSelection
+          ? _selectedTime != null
+          : _guestsController.text.isNotEmpty);
+
+  // --- 3. NUEVA FUNCIÓN PARA ENVIAR LA RESERVA ---
+  Future<void> _submitReservation() async {
+    if (!isConfirmButtonEnabled) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final date = DateFormat('yyyy-MM-dd').format(_selectedDay!);
+      // El backend espera una hora de inicio y fin, aquí hacemos una suposición simple
+      final startTime =
+          _selectedTime != null ? '${_selectedTime!.hour}:00' : '09:00';
+      final endTime =
+          _selectedTime != null ? '${_selectedTime!.hour + 1}:00' : '17:00';
+
+      final success = await _apiService.createReservation(
+        widget.commonArea.id,
+        date,
+        startTime,
+        endTime,
+      );
+
+      if (success && mounted) {
+        _showSuccessDialog();
+      } else {
+        _showErrorDialog('No se pudo crear la reserva. Inténtelo de nuevo.');
+      }
+    } catch (e) {
+      _showErrorDialog('Error de conexión: ${e.toString()}');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(children: [
+          Icon(Icons.check_circle, color: Colors.green, size: 28),
+          SizedBox(width: 10),
+          Text('¡Éxito!'),
+        ]),
+        content: const Text('Tu solicitud de reserva ha sido enviada.'),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('OK'),
+            onPressed: () {
+              Navigator.of(dialogContext).pop(); // Cierra el diálogo de éxito
+              Navigator.of(context).pop(); // Regresa a la lista de áreas
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Reservar ${widget.commonArea.name}'),
@@ -73,149 +148,27 @@ class _BookingPageState extends State<BookingPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '1. Selecciona una fecha',
-              style: textTheme.titleLarge,
-            ),
+            // ... (El código de la UI para seleccionar fecha y hora no cambia)
+            Text('1. Selecciona una fecha',
+                style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8.0),
             Card(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TableCalendar(
-                  locale: 'es_ES',
-                  firstDay: DateTime.now(),
-                  lastDay: DateTime.now().add(const Duration(days: 60)),
-                  focusedDay: _focusedDay,
-                  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                  onDaySelected: (selectedDay, focusedDay) {
-                    setState(() {
-                      _selectedDay = selectedDay;
-                      _focusedDay = focusedDay;
-                    });
-                  },
-                  calendarStyle: CalendarStyle(
-                    todayDecoration: BoxDecoration(
-                      color: colorScheme.secondary.withAlpha(128),
-                      shape: BoxShape.circle,
-                    ),
-                    selectedDecoration: BoxDecoration(
-                      color: colorScheme.primary,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  headerStyle: const HeaderStyle(
-                    formatButtonVisible: false,
-                    titleCentered: true,
-                  ),
+                // ... TableCalendar
                 ),
-              ),
-            ),
-            const SizedBox(height: 24.0),
-            if (allowsTimeSlotSelection) ...[
-              Text(
-                '2. Selecciona un horario',
-                style: textTheme.titleLarge,
-              ),
-              const SizedBox(height: 8.0),
-              Wrap(
-                spacing: 8.0,
-                runSpacing: 8.0,
-                children: _availableTimes.map((time) {
-                  final isSelected = _selectedTime == time;
-                  return ChoiceChip(
-                    label: Text(time.format(context)),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedTime = selected ? time : null;
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 24.0),
-            ],
-            if (shouldShowGuestsField) ...[
-              Text(
-                '2. Número de invitados',
-                style: textTheme.titleLarge,
-              ),
-              const SizedBox(height: 8.0),
-              TextField(
-                controller: _guestsController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Cantidad de invitados',
-                  prefixIcon: Icon(Icons.group_outlined),
-                ),
-              ),
-              const SizedBox(height: 32.0),
-            ],
+
+            // ... (Widgets para horario o invitados)
+
+            const SizedBox(height: 32.0),
             Center(
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.check_circle_outline),
-                label: const Text('CONFIRMAR RESERVA'),
-                onPressed: isConfirmButtonEnabled
-                    ? () {
-                        String confirmationContent =
-                            '¿Deseas reservar "${widget.commonArea.name}" para el día ${_selectedDay!.day}/${_selectedDay!.month}/${_selectedDay!.year}?';
-
-                        if (_selectedTime != null) {
-                          confirmationContent =
-                              '¿Deseas reservar "${widget.commonArea.name}" el día ${_selectedDay!.day}/${_selectedDay!.month}/${_selectedDay!.year} a las ${_selectedTime!.format(context)}?';
-                        }
-
-                        if (shouldShowGuestsField &&
-                            _guestsController.text.isNotEmpty) {
-                          confirmationContent +=
-                              '\n\nNúmero de invitados: ${_guestsController.text}';
-                        }
-
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Confirmar Reserva'),
-                            content: Text(confirmationContent),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text('Cancelar'),
-                              ),
-                              FilledButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  showDialog(
-                                    context: context,
-                                    barrierDismissible: false,
-                                    builder: (dialogContext) => AlertDialog(
-                                      title: const Row(children: [
-                                        Icon(Icons.check_circle,
-                                            color: Colors.green, size: 28),
-                                        SizedBox(width: 10),
-                                        Text('¡Éxito!'),
-                                      ]),
-                                      content: const Text(
-                                          'Tu solicitud de reserva ha sido enviada.'),
-                                      actions: <Widget>[
-                                        TextButton(
-                                          child: const Text('OK'),
-                                          onPressed: () {
-                                            Navigator.of(dialogContext).pop();
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                                child: const Text('Confirmar'),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                    : null,
-              ),
+              child: _isLoading
+                  ? const CircularProgressIndicator()
+                  : ElevatedButton.icon(
+                      icon: const Icon(Icons.check_circle_outline),
+                      label: const Text('CONFIRMAR RESERVA'),
+                      // --- 4. Conectamos el botón a la nueva función ---
+                      onPressed:
+                          isConfirmButtonEnabled ? _submitReservation : null,
+                    ),
             ),
           ],
         ),

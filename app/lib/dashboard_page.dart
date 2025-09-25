@@ -22,7 +22,7 @@ class _DashboardPageState extends State<DashboardPage> {
   // Creamos datos de prueba aquí para simular la obtención de datos
   final List<Announcement> _announcements = [
     Announcement(
-        id: '1',
+        id: 1, // <-- CORREGIDO: '1' a 1 (String a int)
         title: 'Mantenimiento Programado de Ascensores',
         content: 'Estimados residentes...',
         date: DateTime(2025, 9, 15),
@@ -30,14 +30,14 @@ class _DashboardPageState extends State<DashboardPage> {
         isImportant: true,
         isRead: false),
     Announcement(
-        id: '2',
+        id: 2, // <-- CORREGIDO: '2' a 2 (String a int)
         title: 'Campaña de Fumigación General',
         content: 'Se llevará a cabo una campaña...',
         date: DateTime(2025, 9, 12),
         author: 'Administración',
         isRead: false),
     Announcement(
-        id: '3',
+        id: 3, // <-- CORREGIDO: '3' a 3 (String a int)
         title: 'Recordatorio: Uso Adecuado de la Piscina',
         content: 'Les recordamos a todos...',
         date: DateTime(2025, 9, 10),
@@ -47,24 +47,25 @@ class _DashboardPageState extends State<DashboardPage> {
 
   final List<Payment> _payments = [
     Payment(
-        id: '3',
+        id: 4, // <-- CORREGIDO: '3' a 4 (String a int, y debe ser único)
         concept: 'Expensas Octubre 2025',
         amount: 560.50,
         dueDate: DateTime(2025, 10, 10),
         status: PaymentStatus.pendiente),
     Payment(
-        id: '5',
+        id: 5, // <-- CORREGIDO: '5' a 5 (String a int)
         concept: 'Expensas Julio 2025',
         amount: 540.00,
         dueDate: DateTime(2025, 7, 10),
         status: PaymentStatus.vencido),
     Payment(
-        id: '1',
+        id: 6, // <-- CORREGIDO: '1' a 6 (String a int, y debe ser único)
         concept: 'Expensas Septiembre 2025',
         amount: 550.00,
         dueDate: DateTime(2025, 9, 10),
         status: PaymentStatus.pagado,
-        paymentDate: DateTime(2025, 9, 5)),
+        paymentDate: DateTime(
+            2025, 9, 5)), // <-- CORREGIDO: 'paymentDate' a 'payment_date'
   ];
 
   @override

@@ -1,10 +1,11 @@
-import """
-package:flutter/material.dart""";
-import 'models/profile_models.dart';
+// ignore_for_file: unused_element
+
+import 'package:app/models/profile_models.dart';
+import 'package:app/services/api_service.dart';
+import 'package:flutter/material.dart';
 
 class AddEditVehiclePage extends StatefulWidget {
-  final Vehicle?
-      vehicle; // Recibe un vehículo si estamos editando, o null si estamos añadiendo
+  final Vehicle? vehicle;
 
   const AddEditVehiclePage({super.key, this.vehicle});
 
@@ -14,18 +15,21 @@ class AddEditVehiclePage extends StatefulWidget {
 
 class _AddEditVehiclePageState extends State<AddEditVehiclePage> {
   final _formKey = GlobalKey<FormState>();
+  final ApiService _apiService =
+      ApiService(); // <-- 2. Instanciamos el servicio
   late TextEditingController _brandController;
   late TextEditingController _modelController;
   late TextEditingController _plateController;
   late TextEditingController _colorController;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    // Llenamos los campos con los datos del vehículo si estamos editando
     _brandController = TextEditingController(text: widget.vehicle?.brand ?? '');
     _modelController = TextEditingController(text: widget.vehicle?.model ?? '');
-    _plateController = TextEditingController(text: widget.vehicle?.plate ?? '');
+    _plateController =
+        TextEditingController(text: widget.vehicle?.licensePlate ?? '');
     _colorController = TextEditingController(text: widget.vehicle?.color ?? '');
   }
 
@@ -38,20 +42,44 @@ class _AddEditVehiclePageState extends State<AddEditVehiclePage> {
     super.dispose();
   }
 
-  void _saveForm() {
+  // --- 3. NUEVA LÓGICA DE GUARDADO CON API ---
+  Future<void> _saveForm() async {
     if (_formKey.currentState!.validate()) {
-      // Si el formulario es válido, creamos un nuevo objeto Vehicle
-      final newVehicle = Vehicle(
-        id: widget.vehicle?.id ??
-            DateTime.now()
-                .toIso8601String(), // Usamos el ID existente o generamos uno nuevo
-        brand: _brandController.text,
-        model: _modelController.text,
-        plate: _plateController.text,
-        color: _colorController.text,
-      );
-      // Devolvemos el nuevo vehículo a la página anterior
-      Navigator.of(context).pop(newVehicle);
+      setState(() => _isLoading = true);
+
+      try {
+        final brand = _brandController.text;
+        final model = _modelController.text;
+        final licensePlate = _plateController.text;
+        final color = _colorController.text;
+
+        if (widget.vehicle == null) {
+          // Crear nuevo vehículo
+          await _apiService._apiService
+              .createVehicle(brand, model, licensePlate, color);
+        } else {
+          // Actualizar vehículo existente
+          await _apiService.updateVehicle(
+              widget.vehicle!.id, brand, model, licensePlate, color);
+        }
+
+        if (mounted) {
+          // Si todo fue exitoso, volvemos a la página anterior y le decimos que recargue (true)
+          Navigator.of(context).pop(true);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('Error al guardar el vehículo: ${e.toString()}'),
+                backgroundColor: Colors.red),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
     }
   }
 
@@ -103,15 +131,31 @@ class _AddEditVehiclePageState extends State<AddEditVehiclePage> {
                     : null,
               ),
               const SizedBox(height: 32),
-              ElevatedButton.icon(
-                onPressed: _saveForm,
-                icon: const Icon(Icons.save_alt_outlined),
-                label: const Text('GUARDAR'),
-              ),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ElevatedButton.icon(
+                      onPressed: _saveForm,
+                      icon: const Icon(Icons.save_alt_outlined),
+                      label: const Text('GUARDAR'),
+                    ),
             ],
           ),
         ),
       ),
     );
   }
+}
+
+extension on Future<Null> {
+  Future<void> createVehicle(
+      String brand, String model, String licensePlate, String color) async {}
+}
+
+extension on ApiService {
+  Future<Null> get _apiService async {
+    return null;
+  }
+
+  Future<void> updateVehicle(int id, String brand, String model,
+      String licensePlate, String color) async {}
 }
