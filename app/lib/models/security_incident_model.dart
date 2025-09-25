@@ -1,38 +1,21 @@
-// Este modelo ya no lo usaremos directamente, lo reemplazaremos por 'Task' o 'Feedback' del backend
-class ManualIncident {
-  // ... (Podemos dejarlo o eliminarlo más adelante)
-}
+// lib/models/security_incident_model.dart
 
-class VisitorLog {
-  final int id;
-  final String visitorName;
-  final String visitorCI;
-  final String visitingTo;
-  final String? licensePlate; // Campo actualizado
-  final DateTime entryTime;
-  DateTime? exitTime;
+enum UrgencyLevel { baja, media, alta }
 
-  VisitorLog({
+class SecurityIncident {
+  final String id;
+  final String title;
+  final String description;
+  final DateTime date;
+  final UrgencyLevel urgency;
+  final String reportedBy; // <-- Este campo faltaba
+
+  SecurityIncident({
     required this.id,
-    required this.visitorName,
-    required this.visitorCI,
-    required this.visitingTo,
-    this.licensePlate,
-    required this.entryTime,
-    this.exitTime,
+    required this.title,
+    required this.description,
+    required this.date,
+    required this.urgency,
+    required this.reportedBy, // <-- Añadido al constructor
   });
-
-  factory VisitorLog.fromJson(Map<String, dynamic> json) {
-    return VisitorLog(
-      id: json['id'],
-      visitorName: json['visitor_name'],
-      visitorCI: json['ci'],
-      visitingTo: json['resident_name'] ??
-          'N/A', // O el campo correcto que venga de la API
-      licensePlate: json['license_plate'],
-      entryTime: DateTime.parse(json['entry_time']),
-      exitTime:
-          json['exit_time'] != null ? DateTime.parse(json['exit_time']) : null,
-    );
-  }
 }

@@ -1,28 +1,31 @@
-import '../models/maintenance_task_model.dart'; // <-- 1. AÑADE ESTA IMPORTACIÓN
+// lib/data/mock_data.dart
+
+import '../models/maintenance_task_model.dart';
 import '../models/security_incident_model.dart';
+import '../models/VisitorLog.dart'; // Asegúrate de que este modelo está corregido
 
 // Lista global de registros de visitantes para simular una base de datos.
 final List<VisitorLog> mockVisitorLogs = [
   VisitorLog(
-    id: '1',
+    id: 1, // Corregido a int
     visitorName: 'Ana Pérez',
-    visitorCI: '1234567 SC',
-    visitingTo: 'Uruguay 20',
+    ci: '1234567 SC', // Corregido: visitorCI -> ci
+    residentName: 'Uruguay 20', // Corregido: visitingTo -> residentName
     entryTime: DateTime.now().subtract(const Duration(hours: 2)),
   ),
   VisitorLog(
-    id: '2',
+    id: 2,
     visitorName: 'Juan Lopez',
-    visitorCI: '9876543 CB',
-    visitingTo: 'Paraguay 15',
-    vehiclePlate: '1234ABC',
+    ci: '9876543 CB',
+    residentName: 'Paraguay 15',
+    licensePlate: '1234ABC',
     entryTime: DateTime.now().subtract(const Duration(minutes: 45)),
   ),
   VisitorLog(
-    id: '3',
+    id: 3,
     visitorName: 'Maria Garcia',
-    visitorCI: '5554433 LP',
-    visitingTo: 'Argentina 10',
+    ci: '5554433 LP',
+    residentName: 'Argentina 10',
     entryTime: DateTime.now().subtract(const Duration(days: 1)),
     exitTime: DateTime.now().subtract(const Duration(days: 1, hours: -2)),
   ),
@@ -39,7 +42,6 @@ final List<SecurityIncident> mockIncidents = [
     urgency: UrgencyLevel.media,
     reportedBy: 'Guardia A',
   ),
-  // ... (otros incidentes)
 ];
 
 // Lista de alertas generadas por IA
@@ -53,49 +55,18 @@ final List<SecurityIncident> mockAiAlerts = [
     urgency: UrgencyLevel.alta,
     reportedBy: 'IA - Cámara 3',
   ),
-  // ... (otras alertas)
 ];
 
-// --- 2. AÑADE ESTA NUEVA LISTA DE TAREAS DE MANTENIMIENTO ---
+// Lista de tareas de mantenimiento
 final List<MaintenanceTask> mockMaintenanceTasks = [
   MaintenanceTask(
-    id: 'task1',
+    id: 1, // Corregido a int
     title: 'Reparar luz de pasillo - Piso 5',
     description:
         'La luz del pasillo principal del piso 5, cerca del ascensor A, no enciende. Posiblemente sea el foco.',
     priority: TaskPriority.media,
     status: TaskStatus.pendiente,
     dateReported: DateTime.now().subtract(const Duration(hours: 2)),
-    assignedTo: 'Juan Martinez',
-  ),
-  MaintenanceTask(
-    id: 'task2',
-    title: 'Mantenimiento preventivo de bomba de agua',
-    description:
-        'Realizar la revisión y lubricación mensual de la bomba de agua principal del condominio.',
-    priority: TaskPriority.alta,
-    status: TaskStatus.pendiente,
-    dateReported: DateTime.now().subtract(const Duration(days: 1)),
-    assignedTo: 'Juan Martinez',
-  ),
-  MaintenanceTask(
-    id: 'task3',
-    title: 'Pintar baranda de piscina',
-    description:
-        'La baranda de metal de la escalera de la piscina muestra signos de óxido y necesita una nueva capa de pintura.',
-    priority: TaskPriority.baja,
-    status: TaskStatus.completada,
-    dateReported: DateTime.now().subtract(const Duration(days: 5)),
-    assignedTo: 'Equipo de Mantenimiento',
-  ),
-  MaintenanceTask(
-    id: 'task4',
-    title: 'Revisar fuga en garaje subterráneo',
-    description:
-        'Se reportó una pequeña fuga de agua en el techo del sector -2 del garaje, cerca del espacio B-12.',
-    priority: TaskPriority.alta,
-    status: TaskStatus.enProgreso,
-    dateReported: DateTime.now().subtract(const Duration(hours: 6)),
     assignedTo: 'Juan Martinez',
   ),
 ];

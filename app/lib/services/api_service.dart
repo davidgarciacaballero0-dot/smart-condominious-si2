@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:app/models/VisitorLog.dart';
 import 'package:app/models/announcement_model.dart';
 import 'package:app/models/maintenance_task_model.dart';
 import 'package:app/models/payment_model.dart';

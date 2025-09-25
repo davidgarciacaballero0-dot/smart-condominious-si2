@@ -1,3 +1,4 @@
+import 'package:app/models/VisitorLog.dart';
 import 'package:app/models/security_incident_model.dart';
 import 'package:app/services/api_service.dart';
 import 'package:flutter/material.dart';

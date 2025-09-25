@@ -66,10 +66,6 @@ class _CommunicationsPageState extends State<CommunicationsPage> {
   }
 }
 
-extension on ApiService {
-  Future<List<Announcement>> getAnnouncements() async {}
-}
-
 // La clase AnnouncementCard no necesita grandes cambios, solo los visuales que ya tenías
 class AnnouncementCard extends StatelessWidget {
   final Announcement announcement;

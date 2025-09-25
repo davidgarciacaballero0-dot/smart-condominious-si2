@@ -1,5 +1,6 @@
 // ignore_for_file: unused_element
 
+import 'package:app/models/VisitorLog.dart';
 import 'package:app/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -110,8 +111,8 @@ class _VisitorExitPageState extends State<VisitorExitPage> {
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
-                      Text('Visita a: ${visitor.visitingTo}'),
-                      Text('CI: ${visitor.visitorCI}'),
+                      Text('Visita a: ${visitor.residentName}'),
+                      Text('CI: ${visitor.ci}'),
                       if (visitor.licensePlate != null)
                         Text('Placa: ${visitor.licensePlate}'),
                       const SizedBox(height: 4),
@@ -142,10 +143,4 @@ class _VisitorExitPageState extends State<VisitorExitPage> {
       ),
     );
   }
-}
-
-extension on ApiService {
-  Future<List<VisitorLog>> getActiveVisitors() async {}
-
-  Future registerVisitorExit(int id) async {}
 }
