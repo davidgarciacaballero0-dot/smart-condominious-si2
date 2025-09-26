@@ -1,84 +1,66 @@
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'data/mock_data.dart';
-import 'models/security_incident_model.dart';
+// app/lib/incident_history_page.dart
 
-class IncidentHistoryPage extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:app/models/feedback_model.dart'; // Usamos el nuevo modelo
+
+class IncidentHistoryPage extends StatefulWidget {
   const IncidentHistoryPage({super.key});
 
-  // Función para obtener el color y el ícono según la urgencia
-  (Color, IconData) _getUrgencyStyle(UrgencyLevel urgency) {
-    switch (urgency) {
-      case UrgencyLevel.baja:
-        return (Colors.green, Icons.check_circle_outline);
-      case UrgencyLevel.media:
-        return (Colors.orange, Icons.warning_amber_rounded);
-      case UrgencyLevel.alta:
-        return (Colors.red, Icons.error_outline);
-    }
-  }
+  @override
+  State<IncidentHistoryPage> createState() => _IncidentHistoryPageState();
+}
+
+class _IncidentHistoryPageState extends State<IncidentHistoryPage> {
+  // Como el backend no tiene un endpoint para listar incidentes,
+  // creamos un Future que resuelve inmediatamente a una lista vacía.
+  // Esto deja la página lista para una futura implementación.
+  final Future<List<FeedbackReport>> _futureIncidents = Future.value([]);
 
   @override
   Widget build(BuildContext context) {
-    final sortedIncidents = mockIncidents.reversed.toList();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Historial de Incidentes'),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: sortedIncidents.length,
-        itemBuilder: (context, index) {
-          final incident = sortedIncidents[index];
-          final (urgencyColor, urgencyIcon) =
-              _getUrgencyStyle(incident.urgency);
-
-          return Card(
-            elevation: 4.0,
-            child: ListTile(
-              leading: Icon(urgencyIcon, color: urgencyColor, size: 40),
-              title: Text(
-                incident.title,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+      body: FutureBuilder<List<FeedbackReport>>(
+        future: _futureIncidents,
+        builder: (context, snapshot) {
+          // Aunque la lista esté vacía, mantenemos la estructura correcta
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  'No hay un historial de incidentes disponible por el momento.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18),
+                ),
               ),
-              subtitle: Text(
-                'Reportado por: ${incident.reportedBy}\n${DateFormat('dd/MM/yyyy HH:mm').format(incident.date)} hrs',
-              ),
-              isThreeLine: true,
-              onTap: () {
-                // Muestra un diálogo con los detalles completos del incidente
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: Text(incident.title),
-                    content: SingleChildScrollView(
-                      child: ListBody(
-                        children: <Widget>[
-                          Text(
-                            'Nivel de Urgencia: ${incident.urgency.name.toUpperCase()}',
-                            style: TextStyle(
-                                color: urgencyColor,
-                                fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(incident.description),
-                        ],
-                      ),
-                    ),
-                    actions: <Widget>[
-                      TextButton(
-                        child: const Text('Cerrar'),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
+            );
+          } else {
+            // Este código se ejecutaría si la API devolviera una lista
+            final incidents = snapshot.data!;
+            return ListView.builder(
+              itemCount: incidents.length,
+              itemBuilder: (context, index) {
+                final incident = incidents[index];
+                return Card(
+                  margin: const EdgeInsets.all(8.0),
+                  child: ListTile(
+                    leading: const Icon(Icons.report_problem),
+                    title: Text(incident.title,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text(incident.description),
+                    trailing: Text(incident.status),
                   ),
                 );
               },
-            ),
-          );
+            );
+          }
         },
       ),
     );

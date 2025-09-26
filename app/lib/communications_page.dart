@@ -1,9 +1,9 @@
-// ignore_for_file: unused_import, deprecated_member_use
+// app/lib/communications_page.dart
 
 import 'package:flutter/material.dart';
-
-import 'package.flutter/material.dart';
-import '../models/announcement_model.dart';
+import 'package:app/models/announcement_model.dart';
+import 'package:app/services/announcements_service.dart';
+import 'package:intl/intl.dart'; // Para formatear fechas
 
 class CommunicationsPage extends StatefulWidget {
   const CommunicationsPage({super.key});
@@ -13,42 +13,16 @@ class CommunicationsPage extends StatefulWidget {
 }
 
 class _CommunicationsPageState extends State<CommunicationsPage> {
-  final List<Announcement> _announcements = [
-    Announcement(
-      id: '1',
-      title: 'Mantenimiento Programado de Ascensores',
-      content:
-          'Estimados residentes, les informamos que el día 20 de septiembre se realizará el mantenimiento preventivo de los ascensores de la Torre A. El servicio estará suspendido de 9:00 a 13:00. Agradecemos su comprensión.',
-      date: DateTime(2025, 9, 15),
-      author: 'Administración',
-      isImportant: true,
-      isRead: false,
-    ),
-    Announcement(
-      id: '2',
-      title: 'Campaña de Fumigación General',
-      content:
-          'Se llevará a cabo una campaña de fumigación en todas las áreas comunes el próximo sábado 27 de septiembre a partir de las 8:00. Se recomienda mantener ventanas cerradas durante el proceso.',
-      date: DateTime(2025, 9, 12),
-      author: 'Administración',
-      isRead: false,
-    ),
-    Announcement(
-      id: '3',
-      title: 'Recordatorio: Uso Adecuado de la Piscina',
-      content:
-          'Les recordamos a todos los residentes que el horario de la piscina es de 9:00 a 21:00. Es obligatorio el uso de la ducha antes de ingresar. Por favor, sigamos las normas para el disfrute de todos.',
-      date: DateTime(2025, 9, 10),
-      author: 'Comité de Convivencia',
-      isRead: true,
-    ),
-  ];
+  // Creamos una instancia de nuestro servicio
+  final AnnouncementsService _announcementsService = AnnouncementsService();
+  // Esta variable guardará la "tarea futura" de obtener los comunicados
+  late Future<List<Announcement>> _futureAnnouncements;
 
-  void _markAsRead(String id) {
-    setState(() {
-      final announcement = _announcements.firstWhere((a) => a.id == id);
-      announcement.isRead = true;
-    });
+  @override
+  void initState() {
+    super.initState();
+    // Iniciamos la llamada a la API tan pronto como la página se carga
+    _futureAnnouncements = _announcementsService.getAnnouncements();
   }
 
   @override
@@ -57,111 +31,71 @@ class _CommunicationsPageState extends State<CommunicationsPage> {
       appBar: AppBar(
         title: const Text('Comunicados'),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: _announcements.length,
-        itemBuilder: (context, index) {
-          final announcement = _announcements[index];
-          return AnnouncementCard(
-            announcement: announcement,
-            onReadMore: () => _markAsRead(announcement.id),
-          );
+      body: FutureBuilder<List<Announcement>>(
+        future:
+            _futureAnnouncements, // Le decimos al builder qué futuro observar
+        builder: (context, snapshot) {
+          // CASO 1: Mientras los datos están cargando
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          // CASO 2: Si ocurrió un error
+          else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          // CASO 3: Si los datos llegaron pero están vacíos
+          else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No hay comunicados disponibles.'));
+          }
+          // CASO 4: ¡Éxito! Los datos están aquí
+          else {
+            final announcements = snapshot.data!;
+            return ListView.builder(
+              padding: const EdgeInsets.all(8.0),
+              itemCount: announcements.length,
+              itemBuilder: (context, index) {
+                final announcement = announcements[index];
+                // Usamos un widget separado para construir cada tarjeta
+                return _buildAnnouncementCard(announcement);
+              },
+            );
+          }
         },
       ),
     );
   }
-}
 
-class AnnouncementCard extends StatelessWidget {
-  final Announcement announcement;
-  final VoidCallback onReadMore;
-
-  const AnnouncementCard({
-    super.key,
-    required this.announcement,
-    required this.onReadMore,
-  });
-
-  // --- NUEVA FUNCIÓN PARA DETERMINAR EL COLOR DE LA TARJETA ---
-  Color _getCardColor(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    if (announcement.isImportant && !announcement.isRead) {
-      return colorScheme.errorContainer
-          .withOpacity(0.3); // Color distintivo para importante y no leído
-    }
-    if (announcement.isRead) {
-      return Colors.grey.shade200; // Color para leído
-    }
-    return Colors.white; // Color para no leído (normal)
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-    final cardColor = _getCardColor(context);
-
+  // Widget para construir la tarjeta de un comunicado
+  Widget _buildAnnouncementCard(Announcement announcement) {
     return Card(
-      color: cardColor, // Aplicamos el color dinámico a la tarjeta
-      elevation: announcement.isRead ? 1 : 4,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // --- NUEVO CONTENEDOR PARA EL TÍTULO CON CONTORNO ---
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              border: Border(
-                left: BorderSide(
-                  color: announcement.isImportant
-                      ? colorScheme.error
-                      : colorScheme.primary,
-                  width: 5.0,
-                ),
-              ),
-            ),
-            child: Text(
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
               announcement.title,
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight:
-                    announcement.isRead ? FontWeight.normal : FontWeight.bold,
-              ),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
-          ),
-          // --- Contenido del comunicado ---
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8.0),
-                Text(
-                  'Publicado por ${announcement.author} el ${announcement.date.day}/${announcement.date.month}/${announcement.date.year}',
-                  style: textTheme.bodySmall
-                      ?.copyWith(fontStyle: FontStyle.italic),
-                ),
-                const SizedBox(height: 12.0),
-                Text(
-                  announcement.content,
-                  style: textTheme.bodyLarge,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8.0),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      onReadMore();
-                    },
-                    child: const Text('MARCAR COMO LEÍDO'),
-                  ),
-                ),
-              ],
+            const SizedBox(height: 8),
+            Text(
+              // Usamos el paquete 'intl' para formatear la fecha de forma legible
+              DateFormat('d \'de\' MMMM, yyyy \'a las\' HH:mm', 'es')
+                  .format(announcement.date),
+              style: Theme.of(context).textTheme.bodySmall,
             ),
-          ),
-        ],
+            const Divider(height: 24),
+            Text(
+              announcement.content,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+        ),
       ),
     );
   }

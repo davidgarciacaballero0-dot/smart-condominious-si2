@@ -13,6 +13,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   table_calendar: ^3.2.0
   intl: ^0.20.0
+  http: ^1.2.1                  # <-- AÑADE ESTA LÍNEA
+  flutter_secure_storage: ^9.0.0 # <-- Y ESTA LÍNEA
 
 dev_dependencies:
   flutter_test:

@@ -1,28 +1,28 @@
 {
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Smart Condominium (Debug)",
+            "name": "app",
             "cwd": "app",
             "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart"
+            "type": "dart"
         },
         {
-            "name": "Smart Condominium (Profile)",
+            "name": "app (profile mode)",
             "cwd": "app",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "profile",
-            "program": "lib/main.dart"
+            "flutterMode": "profile"
         },
         {
-            "name": "Smart Condominium (Release)",
+            "name": "app (release mode)",
             "cwd": "app",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "release",
-            "program": "lib/main.dart"
+            "flutterMode": "release"
         }
     ]
-}
+}   

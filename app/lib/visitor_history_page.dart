@@ -1,83 +1,108 @@
-// ignore_for_file: unused_import
+// lib/visitor_history_page.dart
 
+import 'package:app/models/Visitor_Log_Page.dart';
 import 'package:flutter/material.dart';
+import 'package:app/models/visitor_log_model.dart';
+import 'package:app/services/security_service.dart';
+import 'package:app/visitor_log_page.dart';
 import 'package:intl/intl.dart';
-import 'data/mock_data.dart';
-import 'models/security_incident_model.dart';
 
-class VisitorHistoryPage extends StatelessWidget {
+class VisitorHistoryPage extends StatefulWidget {
   const VisitorHistoryPage({super.key});
 
   @override
+  State<VisitorHistoryPage> createState() => _VisitorHistoryPageState();
+}
+
+class _VisitorHistoryPageState extends State<VisitorHistoryPage> {
+  final SecurityService _securityService = SecurityService();
+  late Future<List<VisitorLog>> _futureLogs;
+
+  @override
+  void initState() {
+    super.initState();
+    _futureLogs = _securityService.getVisitorLogs();
+  }
+
+  void _navigateAndRefresh() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const VisitorLogPage()),
+    );
+    if (result == true && mounted) {
+      setState(() {
+        _futureLogs = _securityService.getVisitorLogs();
+      });
+    }
+  }
+
+  Future<void> _registerExit(int logId) async {
+    try {
+      await _securityService.registerVisitorExit(logId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Salida registrada con éxito'),
+            backgroundColor: Colors.green));
+        setState(() {
+          _futureLogs = _securityService.getVisitorLogs();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Ordenamos la lista para mostrar los registros más recientes primero
-    final sortedLogs = mockVisitorLogs.reversed.toList();
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Historial de Visitas'),
-      ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: sortedLogs.length,
-        itemBuilder: (context, index) {
-          final log = sortedLogs[index];
-          final hasExited = log.exitTime != null;
-
-          return Card(
-            color: hasExited ? Colors.white : Colors.blue[50],
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    log.visitorName,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Divider(height: 16),
-                  Text('Visita a: ${log.visitingTo}'),
-                  // --- AQUÍ ESTÁ LA LÍNEA AÑADIDA ---
-                  Text('CI: ${log.visitorCI}'),
-                  if (log.vehiclePlate != null)
-                    Text('Placa: ${log.vehiclePlate}'),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.login, color: Colors.green[700], size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Ingreso: ${DateFormat('dd/MM/yy HH:mm').format(log.entryTime)}',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.logout,
-                          color: hasExited ? Colors.red[700] : Colors.grey,
-                          size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        hasExited
-                            ? 'Salida: ${DateFormat('dd/MM/yy HH:mm').format(log.exitTime!)}'
-                            : 'Aún se encuentra dentro',
-                        style: TextStyle(
-                          fontStyle:
-                              hasExited ? FontStyle.normal : FontStyle.italic,
-                          color: hasExited ? Colors.black87 : Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          );
+      appBar: AppBar(title: const Text('Historial de Visitas')),
+      body: FutureBuilder<List<VisitorLog>>(
+        future: _futureLogs,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No hay registros de visitas.'));
+          } else {
+            final logs = snapshot.data!;
+            return ListView.builder(
+              itemCount: logs.length,
+              itemBuilder: (context, index) => _buildLogCard(logs[index]),
+            );
+          }
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _navigateAndRefresh,
+        child: const Icon(Icons.person_add),
+        tooltip: 'Registrar Entrada',
+      ),
+    );
+  }
+
+  Widget _buildLogCard(VisitorLog log) {
+    final dateFormat = DateFormat('dd/MM/yy HH:mm');
+    final bool canExit = log.status.toLowerCase() == 'inside';
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: ListTile(
+        title: Text(log.visitorFullName,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(
+            'Visita a: ${log.residentName}\nEntrada: ${dateFormat.format(log.entryDatetime)}'),
+        trailing: canExit
+            ? ElevatedButton(
+                child: const Text('Registrar Salida'),
+                onPressed: () => _registerExit(log.id))
+            : Text(log.status.toUpperCase(),
+                style: const TextStyle(
+                    color: Colors.grey, fontWeight: FontWeight.bold)),
       ),
     );
   }

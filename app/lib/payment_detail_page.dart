@@ -1,57 +1,66 @@
+// app/lib/payment_detail_page.dart
+
 import 'package:flutter/material.dart';
-import '../models/payment_model.dart';
+import 'package:app/models/payment_model.dart'; // Usa el modelo FinancialFee
+import 'package:intl/intl.dart';
 
 class PaymentDetailPage extends StatelessWidget {
-  final Payment payment;
-  const PaymentDetailPage({super.key, required this.payment});
+  final FinancialFee fee;
+
+  const PaymentDetailPage({super.key, required this.fee});
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final isPending = payment.status == PaymentStatus.pendiente ||
-        payment.status == PaymentStatus.vencido;
+    final currencyFormat =
+        NumberFormat.currency(locale: 'es_BO', symbol: 'Bs.');
+    final dateFormat = DateFormat('d MMMM, yyyy', 'es');
+    final statusColor =
+        fee.status.toLowerCase() == 'paid' ? Colors.green : Colors.orange;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-            'Detalle de ${payment.type == PaymentType.expensa ? "Expensa" : "Servicio"}'),
+        title: Text(fee.description),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(payment.concept, style: textTheme.headlineSmall),
-            const SizedBox(height: 8),
-            Text('Monto: Bs. ${payment.amount.toStringAsFixed(2)}',
-                style: textTheme.titleLarge),
-            const Divider(height: 48),
-
-            // ... (Aquí irían más detalles del pago)
-
-            const Spacer(), // Empuja el botón al final de la pantalla
-            if (isPending)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.payment),
-                  label: const Text('PAGAR EN LÍNEA'),
-                  onPressed: () {/* Lógica de pago futura */},
-                ),
-              )
-            else
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.receipt_long),
-                  label: const Text('VER COMPROBANTE'),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey.shade600),
-                  onPressed: () {/* Lógica para ver comprobante */},
-                ),
-              ),
+            _buildDetailRow(
+                'Monto:', currencyFormat.format(fee.amount), context),
+            const Divider(),
+            _buildDetailRow('Fecha de Vencimiento:',
+                dateFormat.format(fee.dueDate), context),
+            const Divider(),
+            _buildDetailRow(
+              'Estado:',
+              fee.status.toUpperCase(),
+              context,
+              valueColor: statusColor,
+            ),
+            // Puedes añadir más detalles aquí
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String title, String value, BuildContext context,
+      {Color? valueColor}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: valueColor,
+                ),
+          ),
+        ],
       ),
     );
   }

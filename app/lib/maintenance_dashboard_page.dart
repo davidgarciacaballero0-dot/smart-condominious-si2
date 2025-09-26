@@ -1,120 +1,95 @@
-// ignore_for_file: duplicate_import, curly_braces_in_flow_control_structures
+// app/lib/maintenance_dashboard_page.dart
 
 import 'package:flutter/material.dart';
+import 'package:app/models/task_model.dart';
+import 'package:app/services/maintenance_service.dart';
+import 'package:app/maintenance_task_detail_page.dart';
 import 'package:intl/intl.dart';
-import 'data/mock_data.dart';
-import 'login_page.dart';
-import 'models/maintenance_task_model.dart';
-import 'maintenance_task_detail_page.dart';
-import 'package:flutter/material.dart';
-import 'package:app/dashboard_page.dart';
 
 class MaintenanceDashboardPage extends StatefulWidget {
   const MaintenanceDashboardPage({super.key});
+
   @override
   State<MaintenanceDashboardPage> createState() =>
       _MaintenanceDashboardPageState();
 }
 
 class _MaintenanceDashboardPageState extends State<MaintenanceDashboardPage> {
-  (Color, IconData) _getPriorityStyle(TaskPriority priority) {
-    switch (priority) {
-      case TaskPriority.baja:
-        return (Colors.green, Icons.arrow_downward);
-      case TaskPriority.media:
-        return (Colors.orange, Icons.remove);
-      case TaskPriority.alta:
-        return (Colors.red, Icons.arrow_upward);
-    }
+  final MaintenanceService _maintenanceService = MaintenanceService();
+  late Future<List<Task>> _futureTasks;
+
+  @override
+  void initState() {
+    super.initState();
+    _futureTasks = _maintenanceService.getTasks();
   }
 
-  (String, Color) _getStatusStyle(TaskStatus status) {
-    switch (status) {
-      case TaskStatus.pendiente:
-        return ('Pendiente', Colors.grey.shade700);
-      case TaskStatus.enProgreso:
-        return ('En Progreso', Colors.blue.shade700);
-      case TaskStatus.completada:
-        return ('Completada', Colors.green.shade800);
+  void _navigateToDetailAndRefresh(Task task) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => MaintenanceTaskDetailPage(task: task)),
+    );
+    if (result == true && mounted) {
+      setState(() {
+        _futureTasks = _maintenanceService.getTasks();
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final sortedTasks = List<MaintenanceTask>.from(mockMaintenanceTasks)
-      ..sort((a, b) {
-        if (a.status == TaskStatus.completada &&
-            b.status != TaskStatus.completada) return 1;
-        if (a.status != TaskStatus.completada &&
-            b.status == TaskStatus.completada) return -1;
-        return b.dateReported.compareTo(a.dateReported);
-      });
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tareas de Mantenimiento'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar Sesión',
-            onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginPage()),
-                (Route<dynamic> route) => false,
-              );
-            },
-          ),
-        ],
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: sortedTasks.length,
-        itemBuilder: (context, index) {
-          final task = sortedTasks[index];
-          final (priorityColor, priorityIcon) =
-              _getPriorityStyle(task.priority);
-          final (statusText, statusColor) = _getStatusStyle(task.status);
-
-          return Card(
-            elevation: 2.0,
-            margin: const EdgeInsets.only(bottom: 16.0),
-            child: ListTile(
-              leading: Tooltip(
-                message: 'Prioridad ${task.priority.name}',
-                child: Icon(priorityIcon, color: priorityColor, size: 30),
-              ),
-              title: Text(
-                task.title,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  decoration: task.status == TaskStatus.completada
-                      ? TextDecoration.lineThrough
-                      : TextDecoration.none,
-                ),
-              ),
-              subtitle: Text(
-                  'Reportado: ${DateFormat('dd/MM/yyyy').format(task.dateReported)}'),
-              trailing: Chip(
-                label: Text(statusText,
-                    style: const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold)),
-                backgroundColor: statusColor,
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              ),
-              onTap: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          MaintenanceTaskDetailPage(task: task)),
-                );
-                setState(() {});
+      body: FutureBuilder<List<Task>>(
+        future: _futureTasks,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No tienes tareas asignadas.'));
+          } else {
+            final tasks = snapshot.data!;
+            return ListView.builder(
+              itemCount: tasks.length,
+              itemBuilder: (context, index) {
+                final task = tasks[index];
+                return _buildTaskCard(task);
               },
-            ),
-          );
+            );
+          }
         },
       ),
     );
+  }
+
+  Widget _buildTaskCard(Task task) {
+    final statusInfo = _getStatusInfo(task.status);
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: ListTile(
+        leading: Icon(Icons.build, color: statusInfo['color']),
+        title: Text(task.title,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text('Estado: ${task.status}'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => _navigateToDetailAndRefresh(task),
+      ),
+    );
+  }
+
+  Map<String, dynamic> _getStatusInfo(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return {'color': Colors.green};
+      case 'in_progress':
+        return {'color': Colors.orange};
+      default:
+        return {'color': Colors.grey};
+    }
   }
 }

@@ -1,30 +1,26 @@
-// ignore_for_file: unused_import, unnecessary_const
+// app/lib/main.dart
 
-import 'package:app/dashboard_page.dart';
-import 'package:app/theme.dart';
 import 'package:flutter/material.dart';
-import 'login_page.dart';
-import 'package:intl/date_symbol_data_local.dart'; // <-- 1. IMPORTA EL PAQUETE
+import 'package:app/app_theme.dart';
+import 'package:app/splash_screen.dart'; // <-- Importamos la nueva pantalla
 
-void main() async {
-  // <-- 2. CONVIERTE main EN ASÍNCRONO
-  WidgetsFlutterBinding
-      .ensureInitialized(); // Necesario para esperar la inicialización
-  await initializeDateFormatting('es_ES', null); // <-- 3. INICIALIZA EL IDIOMA
-  runApp(const SmartCondominiumApp());
+void main() {
+  // Ya no necesitamos que main() sea async
+  runApp(const MyApp());
 }
 
-class SmartCondominiumApp extends StatelessWidget {
-  const SmartCondominiumApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const loginPage = const LoginPage();
     return MaterialApp(
       title: 'Smart Condominium',
+      theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
-      theme: appTheme,
-      home: loginPage,
+      // La SplashScreen es ahora el punto de entrada.
+      // Ella decidirá a dónde navegar.
+      home: const SplashScreen(),
     );
   }
 }

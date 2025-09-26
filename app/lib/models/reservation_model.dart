@@ -1,19 +1,29 @@
-import 'package:flutter/material.dart';
+// app/lib/models/reservation_model.dart
 
-class CommonArea {
-  final String id;
-  final String name;
-  final String description;
-  final String imagePath; // <-- CAMBIO DE imageUrl a imagePath
-  final IconData icon;
+class Reservation {
+  final int id;
+  final String commonAreaName;
+  final DateTime date;
+  final String timeSlot;
+  final String status;
 
-  const CommonArea({
+  Reservation({
     required this.id,
-    required this.name,
-    required this.description,
-    required this.imagePath, // <-- CAMBIO AQUÍ
-    required this.icon,
+    required this.commonAreaName,
+    required this.date,
+    required this.timeSlot,
+    required this.status,
   });
-}
 
-// (La clase Booking no cambia)
+  factory Reservation.fromJson(Map<String, dynamic> json) {
+    return Reservation(
+      id: json['id'],
+      commonAreaName: json['common_area'] != null
+          ? json['common_area']['name']
+          : 'Área desconocida',
+      date: DateTime.parse(json['date']),
+      timeSlot: json['time_slot'],
+      status: json['status'],
+    );
+  }
+}

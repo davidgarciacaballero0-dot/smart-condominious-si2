@@ -1,7 +1,10 @@
-import 'package:flutter/material.dart';
+// app/lib/reservations_page.dart
 
-import '../models/reservation_model.dart';
-import 'booking_page.dart';
+import 'package:flutter/material.dart';
+import 'package:app/models/reservation_model.dart';
+import 'package:app/services/reservations_service.dart';
+import 'package:intl/intl.dart';
+import 'package:app/add_reservation_page.dart';
 
 class ReservationsPage extends StatefulWidget {
   const ReservationsPage({super.key});
@@ -11,115 +14,140 @@ class ReservationsPage extends StatefulWidget {
 }
 
 class _ReservationsPageState extends State<ReservationsPage> {
-  // --- LISTA DE DATOS ACTUALIZADA CON RUTAS LOCALES ---
-  final List<CommonArea> _commonAreas = [
-    const CommonArea(
-        id: '1',
-        name: 'Piscina',
-        description: 'Piscina semiolímpica con área para niños.',
-        imagePath: 'assets/images/areas/piscina.jpg',
-        icon: Icons.pool),
-    const CommonArea(
-        id: '2',
-        name: 'Salón de Eventos',
-        description: 'Amplio salón para fiestas y reuniones.',
-        imagePath: 'assets/images/areas/salon.jpg',
-        icon: Icons.celebration),
-    const CommonArea(
-        id: '3',
-        name: 'Cancha de Tenis',
-        description: 'Cancha reglamentaria con iluminación nocturna.',
-        imagePath: 'assets/images/areas/tenis.jpg',
-        icon: Icons.sports_tennis),
-    const CommonArea(
-        id: '4',
-        name: 'Gimnasio',
-        description: 'Equipado con máquinas de última generación.',
-        imagePath: 'assets/images/areas/gimnasio.jpg',
-        icon: Icons.fitness_center),
-    const CommonArea(
-        id: '5',
-        name: 'Churrasquera',
-        description: 'Área social con parrilla y mesas al aire libre.',
-        imagePath: 'assets/images/areas/churrasquera.jpg',
-        icon: Icons.outdoor_grill),
-    const CommonArea(
-        id: '6',
-        name: 'Cancha de Fútbol',
-        description: 'Cancha de césped sintético para fútbol 5.',
-        imagePath: 'assets/images/areas/futbol.jpg',
-        icon: Icons.sports_soccer),
-  ];
+  final ReservationsService _reservationsService = ReservationsService();
+  late Future<List<Reservation>> _futureReservations;
+
+  @override
+  void initState() {
+    super.initState();
+    _futureReservations = _reservationsService.getReservations();
+  }
+
+  void _navigateAndRefresh() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddReservationPage()),
+    );
+    if (result == true && mounted) {
+      setState(() {
+        _futureReservations = _reservationsService.getReservations();
+      });
+    }
+  }
+
+  /// Muestra diálogo y cancela la reserva si se confirma.
+  Future<void> _cancelReservation(int reservationId) async {
+    final bool? confirmed = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar Cancelación'),
+        content:
+            const Text('¿Estás seguro de que deseas cancelar esta reserva?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('No')),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Sí, Cancelar')),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        await _reservationsService.cancelReservation(reservationId);
+        setState(() {
+          _futureReservations = _reservationsService.getReservations();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Reserva cancelada con éxito'),
+              backgroundColor: Colors.green),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Reservar Áreas Comunes'),
+        title: const Text('Mis Reservas'),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: _commonAreas.length,
-        itemBuilder: (context, index) {
-          final area = _commonAreas[index];
-          return CommonAreaCard(commonArea: area);
+      body: FutureBuilder<List<Reservation>>(
+        future: _futureReservations,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No tienes reservas registradas.'));
+          } else {
+            final reservations = snapshot.data!;
+            return ListView.builder(
+              padding: const EdgeInsets.all(8.0),
+              itemCount: reservations.length,
+              itemBuilder: (context, index) {
+                return _buildReservationCard(reservations[index]);
+              },
+            );
+          }
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _navigateAndRefresh,
+        child: const Icon(Icons.add),
       ),
     );
   }
-}
 
-class CommonAreaCard extends StatelessWidget {
-  final CommonArea commonArea;
-
-  const CommonAreaCard({super.key, required this.commonArea});
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+  Widget _buildReservationCard(Reservation reservation) {
+    final dateFormat = DateFormat('d \'de\' MMMM, yyyy', 'es');
+    final statusInfo = _getStatusInfo(reservation.status);
+    final canCancel =
+        ['approved', 'pending'].contains(reservation.status.toLowerCase());
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => BookingPage(commonArea: commonArea),
-            ),
-          );
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // --- CAMBIO DE Image.network a Image.asset ---
-            Image.asset(
-              commonArea.imagePath,
-              height: 150,
-              fit: BoxFit.cover,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    commonArea.name,
-                    style: textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8.0),
-                  Text(
-                    commonArea.description,
-                    style: textTheme.bodyMedium,
-                  ),
-                ],
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+      child: ListTile(
+        leading: Icon(statusInfo['icon'], color: statusInfo['color'], size: 40),
+        title: Text(reservation.commonAreaName,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(
+            'Fecha: ${dateFormat.format(reservation.date)}\nHora: ${reservation.timeSlot}'),
+        trailing: canCancel
+            ? TextButton(
+                child: const Text('Cancelar',
+                    style: TextStyle(color: Colors.redAccent)),
+                onPressed: () => _cancelReservation(reservation.id),
+              )
+            : Text(
+                reservation.status.toUpperCase(),
+                style: TextStyle(
+                    color: statusInfo['color'], fontWeight: FontWeight.bold),
               ),
-            ),
-          ],
-        ),
+        isThreeLine: true,
       ),
     );
+  }
+
+  Map<String, dynamic> _getStatusInfo(String status) {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return {'color': Colors.green, 'icon': Icons.check_circle};
+      case 'pending':
+        return {'color': Colors.orange, 'icon': Icons.hourglass_top};
+      case 'rejected':
+      case 'cancelled': // Añadimos un posible estado 'cancelled'
+        return {'color': Colors.red, 'icon': Icons.cancel};
+      default:
+        return {'color': Colors.grey, 'icon': Icons.help_outline};
+    }
   }
 }

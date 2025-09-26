@@ -1,3 +1,4 @@
+import 'package:app/models/common_area_model.dart';
 import 'package:flutter/material.dart';
 import 'models/reservation_model.dart';
 import 'package:table_calendar/table_calendar.dart';

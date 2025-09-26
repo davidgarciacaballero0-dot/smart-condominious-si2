@@ -1,10 +1,10 @@
-// ignore_for_file: unused_import, deprecated_member_use, undefined_hidden_name
+// app/lib/login_page.dart
 
-import 'package:app/security_dashboard_page.dart';
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
-import 'dashboard_page.dart';
-import 'models/profile_models.dart';
-import 'maintenance_dashboard_page.dart';
+import 'package:app/services/auth_service.dart';
+import 'package:app/dashboard_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,73 +14,64 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
   bool _isLoading = false;
 
-  // ... (resto del archivo sin cambios)
-
   Future<void> _performLogin() async {
-    setState(() {
-      _isLoading = true;
-    });
-    await Future.delayed(const Duration(seconds: 2));
+    FocusScope.of(context).unfocus();
+    setState(() => _isLoading = true);
 
-    String email = _emailController.text;
-    String password = _passwordController.text;
-    Widget? homePage;
+    try {
+      // Intenta iniciar sesión con el servicio de autenticación
+      await _authService.login(
+        _emailController.text,
+        _passwordController.text,
+      );
 
-    // --- LÓGICA DE ROLES ---
-    if (email == "residente@email.com" && password == "123456") {
-      homePage = const DashboardPage(); // Vista de Residente
-    } else if (email == "seguridad@email.com" && password == "123456") {
-      homePage = const SecurityDashboardPage(); // Vista de Seguridad
-    } else if (email == "mantenimiento@email.com" && password == "123456") {
-      homePage = const MaintenanceDashboardPage(); // Vista de Mantenimiento
-    }
+      // --- ESTA ES LA LÓGICA CORREGIDA ---
+      // Deducimos el rol basado en el correo electrónico para la navegación.
+      // Esta es una solución simple; una más robusta obtendría el rol desde la API.
+      String role = 'residente'; // Rol por defecto
+      if (_emailController.text.contains('seguridad')) {
+        role = 'seguridad';
+      } else if (_emailController.text.contains('mantenimiento')) {
+        role = 'mantenimiento';
+      }
 
-    if (mounted) {
-      if (homePage != null) {
+      if (mounted) {
+        // Le pasamos el 'role' a la DashboardPage
         Navigator.of(context).pushReplacement(
-          // --- AQUÍ ESTÁ LA CORRECCIÓN ---
-          MaterialPageRoute(builder: (context) => homePage!),
+          MaterialPageRoute(builder: (context) => DashboardPage(role: role)),
         );
-      } else {
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error: Credenciales incorrectas.'),
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
             backgroundColor: Colors.redAccent,
           ),
         );
       }
-    }
-
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
-// ... (resto del archivo sin cambios)
-
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // --- IMAGEN DE FONDO ---
-          Image.asset(
-            'assets/images/logo_main.png',
-            fit: BoxFit.cover,
-            color:
-                Colors.black.withOpacity(0.5), // Velo oscuro para legibilidad
-            colorBlendMode: BlendMode.darken,
-          ),
-          // --- FORMULARIO CENTRADO ---
+          Image.asset('assets/images/logo_main.png',
+              fit: BoxFit.cover,
+              color: Colors.black.withOpacity(0.5),
+              colorBlendMode: BlendMode.darken),
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
@@ -95,34 +86,31 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      Image.asset(
-                        'assets/images/logo_main.png',
-                        height: 110, // Tamaño final del logo
-                      ),
+                      Image.asset('assets/images/logo_login.png', height: 110),
                       const SizedBox(height: 24.0),
-                      Text(
-                        'INICIAR SESIÓN',
-                        style: textTheme.titleLarge
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
+                      Text('INICIAR SESIÓN',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center),
                       const SizedBox(height: 24.0),
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
-                          labelText: 'Correo Electrónico',
-                          prefixIcon: Icon(Icons.email_outlined),
-                        ),
+                            labelText: 'Correo Electrónico',
+                            prefixIcon: Icon(Icons.email_outlined)),
+                        enabled: !_isLoading,
                       ),
                       const SizedBox(height: 16.0),
                       TextFormField(
                         controller: _passwordController,
                         obscureText: true,
                         decoration: const InputDecoration(
-                          labelText: 'Contraseña',
-                          prefixIcon: Icon(Icons.lock_outline),
-                        ),
+                            labelText: 'Contraseña',
+                            prefixIcon: Icon(Icons.lock_outline)),
+                        enabled: !_isLoading,
                       ),
                       const SizedBox(height: 24.0),
                       _isLoading

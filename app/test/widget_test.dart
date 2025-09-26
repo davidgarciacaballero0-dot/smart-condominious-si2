@@ -1,17 +1,16 @@
-// test/widget_test.dart
+// app/test/widget_test.dart
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:app/main.dart'; // Asegúrate de que el nombre del paquete 'app' sea correcto.
+import 'package:app/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Construimos la app con el NUEVO nombre de la clase.
-    await tester.pumpWidget(const SmartCondominiumApp());
+  testWidgets('App starts and shows SplashScreen', (WidgetTester tester) async {
+    // Construimos nuestra app. Ya no necesita el parámetro isLoggedIn.
+    await tester.pumpWidget(const MyApp());
 
-    // El resto de la prueba puede fallar porque ya no hay un contador,
-    // pero no impedirá que la app se ejecute. Lo podemos borrar para más limpieza.
-    // Por ahora, lo importante es que la app compile.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsNothing);
+    // Verificamos que la SplashScreen (la nueva pantalla de inicio)
+    // muestra un CircularProgressIndicator.
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 }

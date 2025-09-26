@@ -1,6 +1,7 @@
+// lib/visitor_log_page.dart
+
 import 'package:flutter/material.dart';
-import 'data/mock_data.dart';
-import 'models/security_incident_model.dart';
+import 'package:app/services/security_service.dart';
 
 class VisitorLogPage extends StatefulWidget {
   const VisitorLogPage({super.key});
@@ -11,98 +12,91 @@ class VisitorLogPage extends StatefulWidget {
 
 class _VisitorLogPageState extends State<VisitorLogPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _ciController = TextEditingController(); // <-- Campo para CI
-  final _visitingToController = TextEditingController();
-  final _plateController = TextEditingController();
+  final _securityService = SecurityService();
+  bool _isLoading = false;
+
+  final _residentNameController = TextEditingController();
+  final _visitorNameController = TextEditingController();
+  final _visitorDocController = TextEditingController();
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _ciController.dispose(); // <-- No olvidar el dispose
-    _visitingToController.dispose();
-    _plateController.dispose();
+    _residentNameController.dispose();
+    _visitorNameController.dispose();
+    _visitorDocController.dispose();
     super.dispose();
   }
 
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      final newLog = VisitorLog(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        visitorName: _nameController.text,
-        visitorCI: _ciController.text, // <-- Guardamos el CI
-        visitingTo: _visitingToController.text,
-        vehiclePlate:
-            _plateController.text.isNotEmpty ? _plateController.text : null,
-        entryTime: DateTime.now(),
-      );
-
-      mockVisitorLogs.add(newLog);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ingreso de visitante registrado con éxito.'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.of(context).pop();
+  Future<void> _saveEntry() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      setState(() => _isLoading = true);
+      try {
+        await _securityService.registerVisitorEntry(
+          residentName: _residentNameController.text,
+          visitorFullName: _visitorNameController.text,
+          visitorDocumentNumber: _visitorDocController.text,
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Entrada registrada con éxito'),
+                backgroundColor: Colors.green),
+          );
+          Navigator.of(context).pop(true);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Registrar Visita'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                    labelText: 'Nombre Completo del Visitante'),
-                validator: (value) => (value == null || value.isEmpty)
-                    ? 'Ingrese el nombre'
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              // --- CAMPO DE CI AÑADIDO ---
-              TextFormField(
-                controller: _ciController,
-                decoration: const InputDecoration(
-                    labelText: 'Cédula de Identidad (CI)'),
-                validator: (value) => (value == null || value.isEmpty)
-                    ? 'Ingrese el CI del visitante'
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _visitingToController,
-                decoration: const InputDecoration(
-                    labelText: 'Residente a Quien Visita (ej. Uruguay 20)'),
-                validator: (value) => (value == null || value.isEmpty)
-                    ? 'Ingrese el destino'
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _plateController,
-                decoration: const InputDecoration(
-                    labelText: 'Placa del Vehículo (Opcional)'),
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton.icon(
-                onPressed: _submitForm,
-                icon: const Icon(Icons.login_outlined),
-                label: const Text('REGISTRAR ENTRADA'),
-              ),
-            ],
-          ),
+      appBar: AppBar(title: const Text('Registrar Entrada de Visitante')),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(16.0),
+          children: [
+            TextFormField(
+              controller: _visitorNameController,
+              decoration: const InputDecoration(
+                  labelText: 'Nombre Completo del Visitante'),
+              validator: (v) =>
+                  (v?.isEmpty ?? true) ? 'Campo obligatorio' : null,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _visitorDocController,
+              decoration:
+                  const InputDecoration(labelText: 'Documento del Visitante'),
+              validator: (v) =>
+                  (v?.isEmpty ?? true) ? 'Campo obligatorio' : null,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _residentNameController,
+              decoration: const InputDecoration(
+                  labelText: 'Nombre del Residente a Visitar'),
+              validator: (v) =>
+                  (v?.isEmpty ?? true) ? 'Campo obligatorio' : null,
+            ),
+            const SizedBox(height: 32),
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ElevatedButton(
+                    onPressed: _saveEntry,
+                    child: const Text('Registrar Entrada')),
+          ],
         ),
       ),
     );

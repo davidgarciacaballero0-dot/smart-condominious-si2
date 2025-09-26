@@ -1,45 +1,82 @@
-enum UserRole { residente, seguridad, mantenimiento }
+// app/lib/models/profile_models.dart
+
+// No es necesario importar material.dart aquí si no usamos widgets.
 
 class UserProfile {
-  final String name;
-  final String unit; // Unidad habitacional, ej: "Uruguay 20"
+  final int id;
   final String email;
+  final String fullName;
+  final String phoneNumber;
+  final String role; // <-- AÑADE ESTA LÍNEA
 
-  const UserProfile({
-    required this.name,
-    required this.unit,
+  UserProfile({
+    required this.id,
     required this.email,
+    required this.fullName,
+    required this.phoneNumber,
+    required this.role, // <-- AÑADE ESTA LÍNEA
   });
+
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
+    return UserProfile(
+      id: json['id'],
+      email: json['email'],
+      fullName: json['full_name'],
+      phoneNumber: json['phone_number'],
+      role: json['role'], // <-- AÑADE ESTA LÍNEA
+    );
+  }
 }
 
 class Vehicle {
-  final String id;
-  final String brand; // Marca
+  final int id;
+  final String brand;
   final String model;
-  final String plate; // Placa
   final String color;
+  final String licensePlate; // <-- CAMBIO: 'plate' ahora es 'licensePlate'
 
-  const Vehicle({
+  Vehicle({
     required this.id,
     required this.brand,
     required this.model,
-    required this.plate,
     required this.color,
+    required this.licensePlate,
   });
+
+  factory Vehicle.fromJson(Map<String, dynamic> json) {
+    return Vehicle(
+      id: json['id'],
+      brand: json['brand'],
+      model: json['model'],
+      color: json['color'],
+      // Mapeamos 'license_plate' del JSON a nuestra propiedad 'licensePlate'
+      licensePlate: json['license_plate'],
+    );
+  }
 }
 
 class Pet {
-  final String id;
-  final String name; // <-- ESTA LÍNEA FALTABA O ESTABA INCORRECTA
+  final int id;
+  final String name;
   final String species;
   final String breed;
   final String color;
 
-  const Pet({
+  Pet({
     required this.id,
     required this.name,
     required this.species,
     required this.breed,
     required this.color,
   });
+
+  factory Pet.fromJson(Map<String, dynamic> json) {
+    return Pet(
+      id: json['id'],
+      name: json['name'],
+      species: json['species'],
+      breed: json['breed'],
+      color: json['color'],
+    );
+  }
 }

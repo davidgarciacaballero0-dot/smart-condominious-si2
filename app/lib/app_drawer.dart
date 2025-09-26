@@ -1,124 +1,66 @@
-import 'package:flutter/material.dart';
-import 'models/profile_models.dart';
+// lib/app_drawer.dart
 
-// Importamos todas las páginas que vamos a necesitar para la navegación
-import 'dashboard_page.dart';
-import 'finances_page.dart';
-import 'reservations_page.dart';
-import 'communications_page.dart';
-import 'vehicle_management_page.dart';
-import 'pet_management_page.dart';
+import 'package:flutter/material.dart';
+import 'package:app/services/auth_service.dart';
+import 'package:app/login_page.dart';
+import 'package:app/profile_page.dart'; // <-- AÑADE ESTA IMPORTACIÓN
 
 class AppDrawer extends StatelessWidget {
-  const AppDrawer({super.key});
+  final String role;
+  const AppDrawer({super.key, required this.role});
 
   @override
   Widget build(BuildContext context) {
-    const userProfile = UserProfile(
-      name: 'David García',
-      unit: 'Uruguay 20',
-      email: 'residente@email.com',
-    );
+    final authService = AuthService();
 
     return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: <Widget>[
-          UserAccountsDrawerHeader(
-            accountName: Text(
-              userProfile.name,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+      child: Column(
+        children: [
+          const UserAccountsDrawerHeader(
+            accountName: Text('Smart Condominium'),
+            accountEmail: Text('Bienvenido'),
+          ),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                // Opción común para todos los roles
+                ListTile(
+                  leading: const Icon(Icons.account_circle),
+                  title: const Text('Mi Perfil'),
+                  onTap: () {
+                    Navigator.pop(context); // Cierra el drawer
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const ProfilePage()));
+                  },
+                ),
+                const Divider(),
+                // Aquí puedes volver a añadir las opciones específicas por rol si quieres
+                if (role == 'residente') ...[
+                  // ... tus ListTile para residentes
+                ],
+                if (role == 'seguridad') ...[
+                  // ... tus ListTile para seguridad
+                ],
+                // ... etc
+              ],
             ),
-            accountEmail: Text('${userProfile.unit}\n${userProfile.email}'),
-            currentAccountPicture: const CircleAvatar(
-              child: Icon(Icons.person, size: 50),
-            ),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-            ),
           ),
-
-          // --- SECCIONES PRINCIPALES ---
+          // Botón de Cerrar Sesión siempre al final
           ListTile(
-            leading: const Icon(Icons.dashboard_outlined),
-            title: const Text('Menú '),
-            onTap: () {
-              // Cierra el drawer y navega a la página del Dashboard
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const DashboardPage()));
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Cerrar Sesión',
+                style: TextStyle(color: Colors.red)),
+            onTap: () async {
+              await authService.logout();
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                  (Route<dynamic> route) =>
+                      false, // Elimina todas las rutas anteriores
+                );
+              }
             },
-          ),
-          ListTile(
-            leading: const Icon(Icons.monetization_on_outlined),
-            title: const Text('Pago de Expensas'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const FinancesPage()));
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.event_available_outlined),
-            title: const Text('Reservas'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const ReservationsPage()));
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.campaign_outlined),
-            title: const Text('Comunicados'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const CommunicationsPage()));
-            },
-          ),
-
-          const Divider(),
-
-          // --- MENÚ DESPLEGABLE PARA "MI UNIDAD" ---
-          ExpansionTile(
-            leading: const Icon(Icons.home_work_outlined),
-            title: const Text(
-              'Mi Unidad',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            children: <Widget>[
-              ListTile(
-                contentPadding: const EdgeInsets.only(
-                    left: 72.0), // Padding aumentado para anidación
-                title: const Text('Gestionar Vehículos'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const VehicleManagementPage()));
-                },
-              ),
-              ListTile(
-                contentPadding: const EdgeInsets.only(left: 72.0),
-                title: const Text('Gestionar Mascotas'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const PetManagementPage()));
-                },
-              ),
-            ],
           ),
         ],
       ),

@@ -1,6 +1,9 @@
+// app/lib/pet_management_page.dart
+
 import 'package:flutter/material.dart';
-import 'models/profile_models.dart';
-import 'add_edit_pet_page.dart';
+import 'package:app/models/profile_models.dart';
+import 'package:app/services/profile_service.dart';
+import 'package:app/add_edit_pet_page.dart'; // Importamos el formulario
 
 class PetManagementPage extends StatefulWidget {
   const PetManagementPage({super.key});
@@ -10,82 +13,122 @@ class PetManagementPage extends StatefulWidget {
 }
 
 class _PetManagementPageState extends State<PetManagementPage> {
-  final List<Pet> _pets = [
-    const Pet(
-        id: '1',
-        name: 'Rocky',
-        species: 'Perro',
-        breed: 'Golden Retriever',
-        color: 'Dorado'),
-    const Pet(
-        id: '2',
-        name: 'Mishi',
-        species: 'Gato',
-        breed: 'Siames',
-        color: 'Blanco'),
-  ];
+  final ProfileService _profileService = ProfileService();
+  late Future<List<Pet>> _futurePets;
 
-  void _addOrEditPet({Pet? pet}) async {
-    final result = await Navigator.of(context).push<Pet>(
+  @override
+  void initState() {
+    super.initState();
+    _futurePets = _profileService.getPets();
+  }
+
+  void _navigateToForm({Pet? pet}) async {
+    final result = await Navigator.push(
+      context,
       MaterialPageRoute(
-        builder: (context) => AddEditPetPage(pet: pet),
+        builder: (context) => AddEditPetPage(petToEdit: pet),
       ),
     );
-    if (result != null) {
+    if (result == true && mounted) {
       setState(() {
-        if (pet != null) {
-          final index = _pets.indexWhere((p) => p.id == result.id);
-          if (index != -1) _pets[index] = result;
-        } else {
-          _pets.add(result);
-        }
+        _futurePets = _profileService.getPets();
       });
     }
   }
 
-  void _deletePet(String id) {
-    setState(() {
-      _pets.removeWhere((p) => p.id == id);
-    });
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Mascota eliminada')));
+  Future<void> _deletePet(int petId) async {
+    final bool? confirmed = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar Eliminación'),
+        content:
+            const Text('¿Estás seguro de que deseas eliminar esta mascota?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancelar')),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Eliminar')),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        await _profileService.deletePet(petId);
+        setState(() {
+          _futurePets = _profileService.getPets();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Mascota eliminada con éxito'),
+              backgroundColor: Colors.green),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Gestionar Mascotas')),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: _pets.length,
-        itemBuilder: (context, index) {
-          final pet = _pets[index];
-          return Card(
-            child: ListTile(
-              leading: const Icon(Icons.pets, size: 40),
-              title: Text(pet.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle:
-                  Text('${pet.species} - ${pet.breed}\nColor: ${pet.color}'),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                      icon: const Icon(Icons.edit_outlined, color: Colors.blue),
-                      onPressed: () => _addOrEditPet(pet: pet)),
-                  IconButton(
-                      icon: const Icon(Icons.delete_outline, color: Colors.red),
-                      onPressed: () => _deletePet(pet.id)),
-                ],
-              ),
-            ),
-          );
+      appBar: AppBar(
+        title: const Text('Mis Mascotas'),
+      ),
+      body: FutureBuilder<List<Pet>>(
+        future: _futurePets,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No tienes mascotas registradas.'));
+          } else {
+            final pets = snapshot.data!;
+            return ListView.builder(
+              padding: const EdgeInsets.all(8.0),
+              itemCount: pets.length,
+              itemBuilder: (context, index) {
+                return _buildPetCard(pets[index]);
+              },
+            );
+          }
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _addOrEditPet(),
-        label: const Text('Añadir Mascota'),
-        icon: const Icon(Icons.add),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _navigateToForm(),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildPetCard(Pet pet) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+      child: ListTile(
+        leading: const Icon(Icons.pets, size: 40, color: Colors.brown),
+        title:
+            Text(pet.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text('Especie: ${pet.species}\nRaza: ${pet.breed}'),
+        isThreeLine: true,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit, color: Colors.grey),
+              onPressed: () => _navigateToForm(pet: pet),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.redAccent),
+              onPressed: () => _deletePet(pet.id),
+            ),
+          ],
+        ),
       ),
     );
   }
