@@ -1,10 +1,12 @@
 // app/lib/finances_page.dart
+// ignore_for_file: unnecessary_null_comparison
 
-import 'package:flutter/material.dart';
 import 'package:app/models/payment_model.dart';
+import 'package:flutter/material.dart';
+import 'package:app/models/financial_fee_model.dart';
 import 'package:app/services/finances_service.dart';
+import 'package:app/payment_detail_page.dart';
 import 'package:intl/intl.dart';
-import 'package:app/payment_detail_page.dart'; // <-- AÑADE ESTA IMPORTACIÓN
 
 class FinancesPage extends StatefulWidget {
   const FinancesPage({super.key});
@@ -13,14 +15,20 @@ class FinancesPage extends StatefulWidget {
   State<FinancesPage> createState() => _FinancesPageState();
 }
 
-class _FinancesPageState extends State<FinancesPage> {
-  final FinancesService _financesService = FinancesService();
-  late Future<List<FinancialFee>> _futureFinancialFees;
+class _FinancesPageState extends State<FinancesPage>
+    with TickerProviderStateMixin {
+  late final TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _futureFinancialFees = _financesService.getFinancialFees();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -28,60 +36,153 @@ class _FinancesPageState extends State<FinancesPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mis Finanzas'),
+        titleTextStyle: const TextStyle(
+            color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: Colors.white,
+          tabs: const <Widget>[
+            Tab(icon: Icon(Icons.error_outline), text: 'Pagos Pendientes'),
+            Tab(icon: Icon(Icons.history), text: 'Historial de Pagos'),
+          ],
+        ),
       ),
-      body: FutureBuilder<List<FinancialFee>>(
-        future: _futureFinancialFees,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No hay registros financieros.'));
-          } else {
-            final fees = snapshot.data!;
-            return ListView.builder(
-              padding: const EdgeInsets.all(8.0),
-              itemCount: fees.length,
-              itemBuilder: (context, index) {
-                return _buildFeeCard(fees[index]);
-              },
-            );
+      body: TabBarView(
+        controller: _tabController,
+        children: const <Widget>[
+          FinancialFeesList(status: 'Pending'),
+          FinancialFeesList(status: 'Paid'),
+        ],
+      ),
+    );
+  }
+}
+
+class FinancialFeesList extends StatefulWidget {
+  final String status;
+  const FinancialFeesList({super.key, required this.status});
+
+  @override
+  State<FinancialFeesList> createState() => _FinancialFeesListState();
+}
+
+class _FinancialFeesListState extends State<FinancialFeesList> {
+  final FinancesService _financesService = FinancesService();
+  late Future<List<FinancialFee>> _futureFees;
+
+  @override
+  void initState() {
+    super.initState();
+    _futureFees = _financesService.getFinancialFees(status: widget.status);
+  }
+
+  // --- WIDGET NUEVO PARA LA TARJETA DE RESUMEN ---
+  Widget _buildSummaryCard(double totalAmount) {
+    final currencyFormat =
+        NumberFormat.currency(locale: 'es_BO', symbol: 'Bs.');
+    return Card(
+      color: Colors.red[50],
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: Colors.red.shade200, width: 1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      margin: const EdgeInsets.all(8.0),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Total Pendiente:',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.red[800],
+              ),
+            ),
+            Text(
+              currencyFormat.format(totalAmount),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.red[900],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<FinancialFee>>(
+      future: _futureFees,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Text(
+                widget.status == 'Pending'
+                    ? '¡Estás al día! No tienes pagos pendientes.'
+                    : 'No hay pagos en tu historial.',
+                style: const TextStyle(fontSize: 18, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        } else {
+          final fees = snapshot.data!;
+
+          // --- LÓGICA NUEVA PARA CALCULAR EL TOTAL ---
+          double totalPending = 0;
+          if (widget.status == 'Pending') {
+            totalPending = fees.fold(0.0, (sum, item) => sum + item.amount);
           }
-        },
-      ),
+
+          return Column(
+            children: [
+              // --- AÑADIMOS LA TARJETA DE RESUMEN SI HAY PAGOS PENDIENTES ---
+              if (widget.status == 'Pending' && totalPending > 0)
+                _buildSummaryCard(totalPending),
+
+              // Usamos Expanded para que la lista ocupe el espacio restante
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(8.0),
+                  itemCount: fees.length,
+                  itemBuilder: (context, index) {
+                    return _buildFeeCard(fees[index]);
+                  },
+                ),
+              ),
+            ],
+          );
+        }
+      },
     );
   }
 
   Widget _buildFeeCard(FinancialFee fee) {
     final currencyFormat =
         NumberFormat.currency(locale: 'es_BO', symbol: 'Bs.');
-    final dateFormat = DateFormat('d MMMM, yyyy', 'es');
-    final statusColor =
-        fee.status.toLowerCase() == 'paid' ? Colors.green : Colors.orange;
+    final dateFormat = fee.dueDate != null
+        ? DateFormat('d MMM, yyyy', 'es').format(fee.dueDate)
+        : 'N/A';
+    final isPending = fee.status.toLowerCase() == 'pending';
 
     return Card(
+      elevation: 4,
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-      child: ListTile(
-        leading: Icon(Icons.monetization_on, color: statusColor, size: 40),
-        title: Text(fee.description,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text('Vence: ${dateFormat.format(fee.dueDate)}'),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              currencyFormat.format(fee.amount),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            Text(
-              fee.status,
-              style: TextStyle(color: statusColor, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        // AÑADE ESTA LÍNEA PARA HACER LA TARJETA INTERACTIVA:
+      child: InkWell(
         onTap: () {
           Navigator.push(
             context,
@@ -89,6 +190,51 @@ class _FinancesPageState extends State<FinancesPage> {
                 builder: (context) => PaymentDetailPage(fee: fee)),
           );
         },
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                fee.description,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Vencimiento: $dateFormat',
+                      style: const TextStyle(color: Colors.grey)),
+                  Text(
+                    currencyFormat.format(fee.amount),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: isPending ? Colors.redAccent : Colors.green,
+                    ),
+                  ),
+                ],
+              ),
+              if (isPending) ...[
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // TODO: Lógica para el pago en línea
+                    },
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent),
+                    child: const Text('Pagar Ahora'),
+                  ),
+                )
+              ]
+            ],
+          ),
+        ),
       ),
     );
   }
