@@ -6,7 +6,8 @@ import 'package:app/models/profile_models.dart';
 
 class ProfileService {
   final String _baseUrl =
-      "https://smart-condominium-backend-fuab.onrender.com/api";
+      "https://smart-condominium-backend-fuab.onrender.com/api/administration";
+
   final AuthService _authService = AuthService();
 
   // --- MÉTODOS DE VEHÍCULOS (CRUD COMPLETO) ---
@@ -19,7 +20,10 @@ class ProfileService {
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(response.body);
+      // --- CAMBIO CLAVE AQUÍ ---
+      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      final List<dynamic> jsonList =
+          jsonResponse['results']; // Extraemos la lista de 'results'
       return jsonList.map((json) => Vehicle.fromJson(json)).toList();
     } else {
       throw Exception('Error al cargar los vehículos.');
@@ -93,7 +97,6 @@ class ProfileService {
   }
 
   // --- MÉTODOS DE MASCOTAS (CRUD COMPLETO) ---
-
   Future<List<Pet>> getPets() async {
     final token = await _authService.getToken();
     if (token == null) throw Exception('Usuario no autenticado.');
@@ -102,7 +105,10 @@ class ProfileService {
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(response.body);
+      // --- CAMBIO CLAVE AQUÍ ---
+      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      final List<dynamic> jsonList =
+          jsonResponse['results']; // Extraemos la lista de 'results'
       return jsonList.map((json) => Pet.fromJson(json)).toList();
     } else {
       throw Exception('Error al cargar las mascotas.');

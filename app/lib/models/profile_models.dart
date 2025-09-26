@@ -55,6 +55,9 @@ class Vehicle {
   }
 }
 
+// En app/lib/models/profile_models.dart
+// En app/lib/models/profile_models.dart
+
 class Pet {
   final int id;
   final String name;
@@ -73,10 +76,10 @@ class Pet {
   factory Pet.fromJson(Map<String, dynamic> json) {
     return Pet(
       id: json['id'],
-      name: json['name'],
-      species: json['species'],
-      breed: json['breed'],
-      color: json['color'],
+      name: json['name'] ?? 'Sin nombre',
+      species: json['species'] ?? 'No especificado',
+      breed: json['breed'] ?? 'No especificado',
+      color: json['color'] ?? 'No especificado',
     );
   }
 }

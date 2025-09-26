@@ -28,6 +28,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
       context,
       MaterialPageRoute(builder: (context) => const AddReservationPage()),
     );
+
     if (result == true && mounted) {
       setState(() {
         _futureReservations = _reservationsService.getReservations();
@@ -35,7 +36,6 @@ class _ReservationsPageState extends State<ReservationsPage> {
     }
   }
 
-  /// Muestra diálogo y cancela la reserva si se confirma.
   Future<void> _cancelReservation(int reservationId) async {
     final bool? confirmed = await showDialog(
       context: context,
@@ -108,7 +108,12 @@ class _ReservationsPageState extends State<ReservationsPage> {
   }
 
   Widget _buildReservationCard(Reservation reservation) {
-    final dateFormat = DateFormat('d \'de\' MMMM, yyyy', 'es');
+    // --- LÍNEA CORREGIDA ---
+    // Primero verificamos si la fecha es nula.
+    final String formattedDate = reservation.date != null
+        ? DateFormat('d \'de\' MMMM, yyyy', 'es').format(reservation.date!)
+        : 'Fecha no especificada';
+
     final statusInfo = _getStatusInfo(reservation.status);
     final canCancel =
         ['approved', 'pending'].contains(reservation.status.toLowerCase());
@@ -117,10 +122,13 @@ class _ReservationsPageState extends State<ReservationsPage> {
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
       child: ListTile(
         leading: Icon(statusInfo['icon'], color: statusInfo['color'], size: 40),
-        title: Text(reservation.commonAreaName,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          reservation.commonAreaName,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         subtitle: Text(
-            'Fecha: ${dateFormat.format(reservation.date)}\nHora: ${reservation.timeSlot}'),
+          'Fecha: $formattedDate\nHora: ${reservation.timeSlot}',
+        ),
         trailing: canCancel
             ? TextButton(
                 child: const Text('Cancelar',
@@ -130,7 +138,9 @@ class _ReservationsPageState extends State<ReservationsPage> {
             : Text(
                 reservation.status.toUpperCase(),
                 style: TextStyle(
-                    color: statusInfo['color'], fontWeight: FontWeight.bold),
+                  color: statusInfo['color'],
+                  fontWeight: FontWeight.bold,
+                ),
               ),
         isThreeLine: true,
       ),
@@ -144,7 +154,7 @@ class _ReservationsPageState extends State<ReservationsPage> {
       case 'pending':
         return {'color': Colors.orange, 'icon': Icons.hourglass_top};
       case 'rejected':
-      case 'cancelled': // Añadimos un posible estado 'cancelled'
+      case 'cancelled':
         return {'color': Colors.red, 'icon': Icons.cancel};
       default:
         return {'color': Colors.grey, 'icon': Icons.help_outline};

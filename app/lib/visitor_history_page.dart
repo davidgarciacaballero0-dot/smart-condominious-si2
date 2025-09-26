@@ -1,6 +1,6 @@
 // lib/visitor_history_page.dart
 
-import 'package:app/models/Visitor_Log_Page.dart';
+import 'package:app/models/Visitor_Log_Page.dart' hide VisitorLog;
 import 'package:flutter/material.dart';
 import 'package:app/models/visitor_log_model.dart';
 import 'package:app/services/security_service.dart';

@@ -3,27 +3,34 @@
 class Reservation {
   final int id;
   final String commonAreaName;
-  final DateTime date;
+  final DateTime? date;
   final String timeSlot;
   final String status;
 
   Reservation({
     required this.id,
     required this.commonAreaName,
-    required this.date,
+    this.date,
     required this.timeSlot,
     required this.status,
   });
 
   factory Reservation.fromJson(Map<String, dynamic> json) {
+    String areaName;
+    if (json['common_area'] is Map<String, dynamic>) {
+      areaName = json['common_area']['name'] ?? 'Área desconocida';
+    } else if (json['common_area'] != null) {
+      areaName = 'Área ID: ${json['common_area']}';
+    } else {
+      areaName = 'Área no especificada';
+    }
+
     return Reservation(
       id: json['id'],
-      commonAreaName: json['common_area'] != null
-          ? json['common_area']['name']
-          : 'Área desconocida',
-      date: DateTime.parse(json['date']),
-      timeSlot: json['time_slot'],
-      status: json['status'],
+      commonAreaName: areaName,
+      date: json['date'] != null ? DateTime.parse(json['date']) : null,
+      timeSlot: json['time_slot'] ?? 'No especificado',
+      status: json['status'] ?? 'Desconocido',
     );
   }
 }

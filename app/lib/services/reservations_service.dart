@@ -8,7 +8,8 @@ import 'dart:convert';
 
 class ReservationsService {
   final String _baseUrl =
-      "https://smart-condominium-backend-fuab.onrender.com/api";
+      "https://smart-condominium-backend-fuab.onrender.com/api/administration";
+
   final AuthService _authService = AuthService();
 
   Future<List<Reservation>> getReservations() async {
@@ -19,7 +20,10 @@ class ReservationsService {
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(response.body);
+      // --- CAMBIO CLAVE AQUÍ ---
+      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      final List<dynamic> jsonList =
+          jsonResponse['results']; // Extraemos la lista de 'results'
       return jsonList.map((json) => Reservation.fromJson(json)).toList();
     } else {
       throw Exception('Error al cargar las reservas.');

@@ -1,12 +1,13 @@
 // app/lib/services/maintenance_service.dart
-import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:app/models/task_model.dart';
 import 'package:app/services/auth_service.dart';
+import 'dart:convert';
 
 class MaintenanceService {
   final String _baseUrl =
-      "https://smart-condominium-backend-fuab.onrender.com/api";
+      "https://smart-condominium-backend-fuab.onrender.com/api/administration";
   final AuthService _authService = AuthService();
 
   /// Obtiene la lista de tareas asignadas al usuario de mantenimiento.
@@ -20,7 +21,10 @@ class MaintenanceService {
     );
 
     if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(response.body);
+      // --- CORRECCIÓN PARA PAGINACIÓN ---
+      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      final List<dynamic> jsonList = jsonResponse['results'];
+
       return jsonList.map((json) => Task.fromJson(json)).toList();
     } else {
       throw Exception('Error al cargar las tareas de mantenimiento.');
@@ -33,7 +37,6 @@ class MaintenanceService {
     if (token == null) throw Exception('Usuario no autenticado.');
 
     final response = await http.patch(
-      // Usamos PATCH para una actualización parcial
       Uri.parse('$_baseUrl/tasks/$taskId/'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',

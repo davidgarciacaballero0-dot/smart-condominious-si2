@@ -1,19 +1,16 @@
-// lib/services/security_service.dart
+// app/lib/services/security_service.dart
+
 import 'dart:convert';
-import 'package:app/models/Visitor_Log_Page.dart';
 import 'package:http/http.dart' as http;
+import 'package:app/models/visitor_log_model.dart';
 import 'package:app/models/feedback_model.dart';
 import 'package:app/services/auth_service.dart';
-import '../models/visitor_log_model.dart';
 
 class SecurityService {
-  //   final String _baseUrl = 8000;
-
   final String _baseUrl =
-      "https://smart-condominium-backend-fuab.onrender.com/api";
+      "https://smart-condominium-backend-fuab.onrender.com/api/administration";
   final AuthService _authService = AuthService();
 
-  /// Obtiene todos los registros de visitantes.
   Future<List<VisitorLog>> getVisitorLogs() async {
     final token = await _authService.getToken();
     if (token == null) throw Exception('Usuario no autenticado.');
@@ -22,15 +19,16 @@ class SecurityService {
       Uri.parse('$_baseUrl/visitor-logs/'),
       headers: {'Authorization': 'Bearer $token'},
     );
+
     if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(response.body);
+      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      final List<dynamic> jsonList = jsonResponse['results'];
       return jsonList.map((json) => VisitorLog.fromJson(json)).toList();
     } else {
       throw Exception('Error al cargar el historial de visitas.');
     }
   }
 
-  /// Registra la entrada de un nuevo visitante.
   Future<VisitorLog> registerVisitorEntry({
     required String residentName,
     required String visitorFullName,
@@ -51,6 +49,7 @@ class SecurityService {
         'visitor_document_number': visitorDocumentNumber,
       }),
     );
+
     if (response.statusCode == 201) {
       return VisitorLog.fromJson(jsonDecode(response.body));
     } else {
@@ -58,13 +57,11 @@ class SecurityService {
     }
   }
 
-  /// Registra la salida de un visitante.
   Future<void> registerVisitorExit(int logId) async {
     final token = await _authService.getToken();
     if (token == null) throw Exception('Usuario no autenticado.');
 
     final response = await http.post(
-      // El backend espera un POST para esta acción
       Uri.parse('$_baseUrl/visitor-logs/$logId/exit/'),
       headers: {'Authorization': 'Bearer $token'},
     );
@@ -73,7 +70,6 @@ class SecurityService {
     }
   }
 
-  /// Envía un nuevo reporte de incidente/feedback.
   Future<FeedbackReport> reportIncident(
       {required String title, required String description}) async {
     final token = await _authService.getToken();

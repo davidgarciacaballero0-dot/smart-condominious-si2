@@ -1,57 +1,53 @@
 // app/lib/services/auth_service.dart
 
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:app/models/profile_models.dart';
+import 'package:http/http.dart' as http;
 
 class AuthService {
-  final String _baseUrl =
+  final String _baseApiUrl =
       "https://smart-condominium-backend-fuab.onrender.com/api";
-  final _storage = const FlutterSecureStorage();
+  // --- LÍNEA CORREGIDA ---
+  final _storage = const FlutterSecureStorage(); // 'Storage' con 'S' mayúscula
   static const String _tokenKey = 'auth_token';
 
-  /// Inicia sesión y devuelve 'true' si es exitoso.
-  /// Lanza una excepción si falla.
   Future<bool> login(String email, String password) async {
     final response = await http.post(
-      Uri.parse('$_baseUrl/token/'),
+      Uri.parse('$_baseApiUrl/token/'),
       headers: {'Content-Type': 'application/json; charset=UTF-8'},
       body: jsonEncode({'email': email, 'password': password}),
     );
+
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       await _storage.write(key: _tokenKey, value: data['access']);
-      return true; // <-- ESTA ES LA LÍNEA QUE SOLUCIONA EL ERROR
+      return true;
     } else {
       throw Exception(
           'Credenciales incorrectas. Por favor, inténtalo de nuevo.');
     }
   }
 
-  /// Cierra la sesión del usuario eliminando el token.
   Future<void> logout() async {
     await _storage.delete(key: _tokenKey);
   }
 
-  /// Obtiene el token de autenticación del almacenamiento seguro.
   Future<String?> getToken() async {
     return await _storage.read(key: _tokenKey);
   }
 
-  /// Verifica si el usuario tiene un token guardado.
   Future<bool> isLoggedIn() async {
     final token = await getToken();
     return token != null;
   }
 
-  /// Obtiene los datos del perfil del usuario actualmente autenticado.
   Future<UserProfile> getUserProfile() async {
     final token = await getToken();
     if (token == null) throw Exception('Usuario no autenticado.');
 
     final response = await http.get(
-      Uri.parse('$_baseUrl/users/me/'),
+      Uri.parse('$_baseApiUrl/administration/users/me/'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $token',

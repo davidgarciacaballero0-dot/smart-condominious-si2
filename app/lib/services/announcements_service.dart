@@ -2,15 +2,15 @@
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:app/models/announcement_model.dart';
 import 'package:app/services/auth_service.dart';
+import 'package:app/models/announcement_model.dart';
 
 class AnnouncementsService {
-  final String _baseUrl = "http://10.0.2.2:8000/api";
+  final String _baseUrl =
+      "https://smart-condominium-backend-fuab.onrender.com/api/administration";
   final AuthService _authService = AuthService();
 
   /// Obtiene la lista de todos los comunicados desde el backend.
-  /// Requiere un token de autenticación válido.
   Future<List<Announcement>> getAnnouncements() async {
     final token = await _authService.getToken();
     if (token == null) {
@@ -21,20 +21,17 @@ class AnnouncementsService {
       Uri.parse('$_baseUrl/announcements/'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
-        // Adjuntamos el token en la cabecera de autorización.
         'Authorization': 'Bearer $token',
       },
     );
 
     if (response.statusCode == 200) {
-      // Si el servidor responde correctamente (OK)
-      final List<dynamic> jsonList = jsonDecode(response.body);
+      // --- CORRECCIÓN PARA PAGINACIÓN ---
+      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      final List<dynamic> jsonList = jsonResponse['results'];
 
-      // Usamos el constructor .fromJson que creamos en el modelo
-      // para convertir cada elemento de la lista JSON en un objeto Announcement.
       return jsonList.map((json) => Announcement.fromJson(json)).toList();
     } else {
-      // Si hay un error, lanzamos una excepción para manejarla en la UI.
       throw Exception('Error al cargar los comunicados.');
     }
   }
