@@ -7,6 +7,8 @@ import 'package:app/services/auth_service.dart';
 import '../models/visitor_log_model.dart';
 
 class SecurityService {
+  //   final String _baseUrl = 8000;
+
   final String _baseUrl =
       "https://smart-condominium-backend-fuab.onrender.com/api";
   final AuthService _authService = AuthService();

@@ -86,7 +86,7 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      Image.asset('assets/images/logo_login.png', height: 110),
+                      Image.asset('assets/images/logo_main.png', height: 110),
                       const SizedBox(height: 24.0),
                       Text('INICIAR SESIÓN',
                           style: Theme.of(context)
