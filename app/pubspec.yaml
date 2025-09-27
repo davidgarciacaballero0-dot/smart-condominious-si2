@@ -15,6 +15,7 @@ dependencies:
   intl: ^0.20.0
   http: ^1.2.1                  # <-- AÑADE ESTA LÍNEA
   flutter_secure_storage: ^9.0.0 # <-- Y ESTA LÍNEA
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

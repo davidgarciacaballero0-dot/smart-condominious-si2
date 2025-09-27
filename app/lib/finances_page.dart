@@ -1,4 +1,4 @@
-// app/lib/finances_page.dart
+// En: app/lib/finances_page.dart (Reemplazar todo el contenido)
 
 import 'package:flutter/material.dart';
 import 'package:app/models/payment_model.dart';
@@ -14,19 +14,57 @@ class FinancesPage extends StatefulWidget {
 }
 
 class _FinancesPageState extends State<FinancesPage>
-    with TickerProviderStateMixin {
-  late final TabController _tabController;
+    with SingleTickerProviderStateMixin {
+  final FinancesService _financesService = FinancesService();
+  late Future<List<FinancialFee>> _feesFuture;
+  late TabController _tabController;
+
+  List<FinancialFee> _pendingFees = [];
+  List<FinancialFee> _paidFees = [];
+  double _totalPending = 0.0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _loadAndFilterFees();
+  }
+
+  void _loadAndFilterFees() {
+    _feesFuture = _financesService.getFinancialFees(); // Llama sin filtro
+    _feesFuture.then((allFees) {
+      if (mounted) {
+        setState(() {
+          // *** LÓGICA DE FILTRADO CORREGIDA ***
+          // La pestaña de pendientes ahora incluye 'Pendiente' y 'Vencido'.
+          _pendingFees = allFees
+              .where((fee) =>
+                  ['pendiente', 'vencido'].contains(fee.status.toLowerCase()))
+              .toList();
+
+          _paidFees = allFees
+              .where((fee) => fee.status.toLowerCase() == 'pagado')
+              .toList();
+
+          _totalPending =
+              _pendingFees.fold(0.0, (sum, item) => sum + item.amount);
+        });
+      }
+    }).catchError((error) {
+      debugPrint("Error al cargar las finanzas: $error");
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _refreshData() {
+    setState(() {
+      _loadAndFilterFees();
+    });
   }
 
   @override
@@ -42,52 +80,55 @@ class _FinancesPageState extends State<FinancesPage>
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
           indicatorColor: Colors.white,
-          tabs: const <Widget>[
-            Tab(icon: Icon(Icons.error_outline), text: 'Pagos Pendientes'),
-            Tab(icon: Icon(Icons.history), text: 'Historial de Pagos'),
+          tabs: const [
+            Tab(icon: Icon(Icons.warning_amber_rounded), text: 'Pendientes'),
+            Tab(icon: Icon(Icons.history), text: 'Historial'),
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const <Widget>[
-          FinancialFeesList(status: 'Pending'),
-          FinancialFeesList(status: 'Paid'),
-        ],
+      body: FutureBuilder<List<FinancialFee>>(
+        future: _feesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData) {
+            return const Center(child: Text('No se encontraron datos.'));
+          }
+
+          return Column(
+            children: [
+              if (_tabController.index == 0 && _totalPending > 0)
+                _buildTotalPendingCard(),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildFeesList(_pendingFees,
+                        '¡Estás al día! No tienes pagos pendientes.'),
+                    _buildFeesList(
+                        _paidFees, 'No tienes pagos en tu historial.'),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
-}
 
-class FinancialFeesList extends StatefulWidget {
-  final String status;
-  const FinancialFeesList({super.key, required this.status});
-
-  @override
-  State<FinancialFeesList> createState() => _FinancialFeesListState();
-}
-
-class _FinancialFeesListState extends State<FinancialFeesList> {
-  final FinancesService _financesService = FinancesService();
-  late Future<List<FinancialFee>> _futureFees;
-
-  @override
-  void initState() {
-    super.initState();
-    _futureFees = _financesService.getFinancialFees(status: widget.status);
-  }
-
-  Widget _buildSummaryCard(double totalAmount) {
-    final currencyFormat =
+  Widget _buildTotalPendingCard() {
+    final formatCurrency =
         NumberFormat.currency(locale: 'es_BO', symbol: 'Bs.');
     return Card(
+      margin: const EdgeInsets.all(16.0),
+      elevation: 4.0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       color: Colors.red[50],
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.red.shade200, width: 1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      margin: const EdgeInsets.all(8.0),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
@@ -98,7 +139,7 @@ class _FinancialFeesListState extends State<FinancialFeesList> {
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.red[800])),
-            Text(currencyFormat.format(totalAmount),
+            Text(formatCurrency.format(_totalPending),
                 style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -109,124 +150,74 @@ class _FinancialFeesListState extends State<FinancialFeesList> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<FinancialFee>>(
-      future: _futureFees,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Text(
-                widget.status == 'Pending'
-                    ? '¡Estás al día! No tienes pagos pendientes.'
-                    : 'No hay pagos en tu historial.',
-                style: const TextStyle(fontSize: 18, color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          );
-        } else {
-          final fees = snapshot.data!;
-          double totalPending = 0;
-          if (widget.status == 'Pending') {
-            totalPending = fees.fold(0.0, (sum, item) => sum + item.amount);
-          }
-
-          return Column(
-            children: [
-              if (widget.status == 'Pending' && totalPending > 0)
-                _buildSummaryCard(totalPending),
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-                  itemCount: fees.length,
-                  itemBuilder: (context, index) => _buildFeeCard(fees[index]),
-                ),
-              ),
-            ],
-          );
-        }
-      },
+  Widget _buildFeesList(List<FinancialFee> fees, String emptyMessage) {
+    if (fees.isEmpty) {
+      return Center(
+          child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Text(emptyMessage,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+      ));
+    }
+    return RefreshIndicator(
+      onRefresh: () async => _refreshData(),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(8.0),
+        itemCount: fees.length,
+        itemBuilder: (context, index) {
+          return _buildFeeCard(fees[index]);
+        },
+      ),
     );
   }
 
   Widget _buildFeeCard(FinancialFee fee) {
-    final currencyFormat =
+    final formatCurrency =
         NumberFormat.currency(locale: 'es_BO', symbol: 'Bs.');
-    final dateFormat = DateFormat('d MMM, yyyy', 'es').format(fee.dueDate);
-    final isPending = fee.status.toLowerCase() == 'pending' ||
-        fee.status.toLowerCase() ==
-            'overdue'; // Considerar también "Overdue" como pendiente para el botón
+    final statusColor = _getStatusColor(fee.status);
 
     return Card(
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 4.0),
-      child: InkWell(
-        onTap: () => Navigator.push(
+      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+      elevation: 3.0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: ListTile(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+        leading: Icon(Icons.receipt_long, color: statusColor, size: 40),
+        title: Text(fee.description,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        subtitle:
+            Text('Vence: ${DateFormat.yMMMMd('es_ES').format(fee.dueDate)}'),
+        trailing: Text(formatCurrency.format(fee.amount),
+            style: TextStyle(
+                fontWeight: FontWeight.bold, fontSize: 16, color: statusColor)),
+        onTap: () {
+          Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => PaymentDetailPage(fee: fee))),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(fee.description,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Vencimiento: $dateFormat',
-                      style: const TextStyle(color: Colors.grey)),
-                  Text(
-                    currencyFormat.format(fee.amount),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      // Color rojo para pendiente/vencido, verde para pagado
-                      color: (fee.status.toLowerCase() == 'pending' ||
-                              fee.status.toLowerCase() == 'overdue')
-                          ? Colors.redAccent
-                          : Colors.green,
-                    ),
-                  ),
-                ],
-              ),
-              if (isPending) ...[
-                // Muestra el botón solo si está pendiente o vencido
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Simplemente navegamos al detalle, donde estará el botón "Pagar en Línea"
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  PaymentDetailPage(fee: fee)));
-                    },
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent),
-                    child: const Text('Pagar Ahora',
-                        style: TextStyle(color: Colors.white)),
-                  ),
-                )
-              ]
-            ],
-          ),
-        ),
+                builder: (context) => PaymentDetailPage(fee: fee)),
+          ).then((paymentMade) {
+            // Si regresamos de la página de detalle y un pago se realizó, actualizamos la lista.
+            if (paymentMade == true) {
+              _refreshData();
+            }
+          });
+        },
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'pendiente':
+        return Colors.orange.shade800;
+      case 'vencido':
+        return Colors.red.shade700;
+      case 'pagado':
+        return Colors.green.shade700;
+      default:
+        return Colors.grey.shade600;
+    }
   }
 }

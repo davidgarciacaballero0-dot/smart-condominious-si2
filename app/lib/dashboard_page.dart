@@ -1,5 +1,7 @@
 // app/lib/dashboard_page.dart
 
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:app/app_drawer.dart';
 import 'package:app/communications_page.dart';
@@ -85,24 +87,50 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
+// Reemplaza el método _buildDashboardCard existente con este:
   Widget _buildDashboardCard(BuildContext context,
       {required IconData icon,
       required String label,
       required VoidCallback onTap}) {
     return Card(
-      elevation: 4,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Icon(icon, size: 48.0, color: Theme.of(context).primaryColor),
-            const SizedBox(height: 16.0),
-            Text(label,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium),
-          ],
+      elevation: 6.0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: [
+              Theme.of(context).primaryColor,
+              Theme.of(context).primaryColor.withOpacity(0.7),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(
+              16), // Para que el efecto de pulsación tenga bordes redondeados
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              Icon(icon, size: 48.0, color: Colors.white),
+              const SizedBox(height: 12.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16, // Ajuste de tamaño para mejor legibilidad
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

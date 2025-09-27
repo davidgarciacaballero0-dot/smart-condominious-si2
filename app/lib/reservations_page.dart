@@ -1,10 +1,10 @@
-// app/lib/reservations_page.dart
+// En: app/lib/reservations_page.dart (Reemplazar todo el contenido)
 
 import 'package:flutter/material.dart';
 import 'package:app/models/reservation_model.dart';
 import 'package:app/services/reservations_service.dart';
+import 'package:app/explore_areas_page.dart';
 import 'package:intl/intl.dart';
-import 'package:app/add_reservation_page.dart';
 
 class ReservationsPage extends StatefulWidget {
   const ReservationsPage({super.key});
@@ -15,24 +15,28 @@ class ReservationsPage extends StatefulWidget {
 
 class _ReservationsPageState extends State<ReservationsPage> {
   final ReservationsService _reservationsService = ReservationsService();
-  late Future<List<Reservation>> _futureReservations;
+  late Future<List<Reservation>> _reservationsFuture;
 
   @override
   void initState() {
     super.initState();
-    _futureReservations = _reservationsService.getReservations();
+    _loadReservations();
   }
 
-  void _navigateAndRefresh() async {
+  void _loadReservations() {
+    setState(() {
+      _reservationsFuture = _reservationsService.getReservations();
+    });
+  }
+
+  Future<void> _navigateAndRefresh() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const AddReservationPage()),
+      MaterialPageRoute(builder: (context) => const ExploreAreasPage()),
     );
 
     if (result == true && mounted) {
-      setState(() {
-        _futureReservations = _reservationsService.getReservations();
-      });
+      _loadReservations();
     }
   }
 
@@ -45,30 +49,36 @@ class _ReservationsPageState extends State<ReservationsPage> {
             const Text('¿Estás seguro de que deseas cancelar esta reserva?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('No')),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('No'),
+          ),
           TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Sí, Cancelar')),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Sí, Cancelar'),
+          ),
         ],
       ),
     );
 
-    if (confirmed == true && mounted) {
+    if (confirmed == true) {
       try {
         await _reservationsService.cancelReservation(reservationId);
-        setState(() {
-          _futureReservations = _reservationsService.getReservations();
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Reserva cancelada con éxito'),
-              backgroundColor: Colors.green),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Reserva cancelada con éxito'),
+                backgroundColor: Colors.green),
+          );
+          _loadReservations();
+        }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('Error al cancelar: $e'),
+                backgroundColor: Colors.red),
+          );
+        }
       }
     }
   }
@@ -78,17 +88,36 @@ class _ReservationsPageState extends State<ReservationsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mis Reservas'),
+        titleTextStyle: const TextStyle(
+            color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: FutureBuilder<List<Reservation>>(
-        future: _futureReservations,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No tienes reservas registradas.'));
-          } else {
+      body: RefreshIndicator(
+        onRefresh: () async => _loadReservations(),
+        child: FutureBuilder<List<Reservation>>(
+          future: _reservationsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Center(
+                  child:
+                      Text('Error al cargar las reservas: ${snapshot.error}'));
+            }
+            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: Text(
+                    'No tienes reservas activas.\n¡Crea una usando el botón +!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                ),
+              );
+            }
+
             final reservations = snapshot.data!;
             return ListView.builder(
               padding: const EdgeInsets.all(8.0),
@@ -97,8 +126,8 @@ class _ReservationsPageState extends State<ReservationsPage> {
                 return _buildReservationCard(reservations[index]);
               },
             );
-          }
-        },
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateAndRefresh,
@@ -108,56 +137,94 @@ class _ReservationsPageState extends State<ReservationsPage> {
   }
 
   Widget _buildReservationCard(Reservation reservation) {
-    // --- LÍNEA CORREGIDA ---
-    // Primero verificamos si la fecha es nula.
-    final String formattedDate = reservation.date != null
-        ? DateFormat('d \'de\' MMMM, yyyy', 'es').format(reservation.date!)
-        : 'Fecha no especificada';
+    final dateFormat = DateFormat.yMMMMd('es_ES');
 
-    final statusInfo = _getStatusInfo(reservation.status);
-    final canCancel =
-        ['approved', 'pending'].contains(reservation.status.toLowerCase());
+    // ----- ESTA ES LA CORRECCIÓN CLAVE -----
+    // Antes de formatear, nos aseguramos de que la fecha no sea nula.
+    final String formattedDate = reservation.date != null
+        ? dateFormat.format(reservation.date!) // Si existe, la formateamos.
+        : 'Fecha no disponible'; // Si no existe, usamos este texto.
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-      child: ListTile(
-        leading: Icon(statusInfo['icon'], color: statusInfo['color'], size: 40),
-        title: Text(
-          reservation.commonAreaName,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(
-          'Fecha: $formattedDate\nHora: ${reservation.timeSlot}',
-        ),
-        trailing: canCancel
-            ? TextButton(
-                child: const Text('Cancelar',
-                    style: TextStyle(color: Colors.redAccent)),
-                onPressed: () => _cancelReservation(reservation.id),
-              )
-            : Text(
-                reservation.status.toUpperCase(),
-                style: TextStyle(
-                  color: statusInfo['color'],
-                  fontWeight: FontWeight.bold,
+      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+      elevation: 4.0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              reservation.commonAreaName,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const Divider(height: 20),
+            _buildInfoRow(Icons.calendar_today, 'Fecha:', formattedDate),
+            const SizedBox(height: 8),
+            _buildInfoRow(Icons.access_time, 'Horario:', reservation.timeSlot),
+            const SizedBox(height: 8),
+            _buildInfoRow(
+              _getStatusIcon(reservation.status),
+              'Estado:',
+              reservation.status.toUpperCase(),
+              statusColor: _getStatusColor(reservation.status),
+            ),
+            const SizedBox(height: 12),
+            if (reservation.status.toLowerCase() == 'activa')
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () => _cancelReservation(reservation.id),
+                  icon: const Icon(Icons.cancel_outlined, color: Colors.red),
+                  label: const Text('Cancelar',
+                      style: TextStyle(color: Colors.red)),
                 ),
               ),
-        isThreeLine: true,
+          ],
+        ),
       ),
     );
   }
 
-  Map<String, dynamic> _getStatusInfo(String status) {
+  Widget _buildInfoRow(IconData icon, String label, String value,
+      {Color? statusColor}) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: statusColor ?? Colors.grey[700]),
+        const SizedBox(width: 12),
+        Text('$label ', style: const TextStyle(fontWeight: FontWeight.bold)),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+                color: statusColor ?? Colors.black87,
+                fontWeight:
+                    statusColor != null ? FontWeight.bold : FontWeight.normal),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'approved':
-        return {'color': Colors.green, 'icon': Icons.check_circle};
-      case 'pending':
-        return {'color': Colors.orange, 'icon': Icons.hourglass_top};
-      case 'rejected':
-      case 'cancelled':
-        return {'color': Colors.red, 'icon': Icons.cancel};
+      case 'activa':
+        return Colors.green.shade700;
+      case 'cancelada':
+        return Colors.red.shade700;
       default:
-        return {'color': Colors.grey, 'icon': Icons.help_outline};
+        return Colors.grey.shade600;
+    }
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status.toLowerCase()) {
+      case 'activa':
+        return Icons.check_circle;
+      case 'cancelada':
+        return Icons.cancel;
+      default:
+        return Icons.hourglass_empty;
     }
   }
 }
