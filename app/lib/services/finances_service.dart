@@ -17,12 +17,9 @@ class FinancesService {
       throw Exception('Usuario no autenticado.');
     }
 
-    // --- LÓGICA DE FILTRADO CORREGIDA Y VERIFICADA ---
-    // Construimos la URL base
+    // --- LÓGICA DE FILTRADO ---
+    // Construye la URL y añade el filtro de estado si se proporciona.
     var uri = Uri.parse('$_baseUrl/financial-fees/');
-
-    // Si se proporciona un estado, lo añadimos como un parámetro de consulta a la URL.
-    // Esto genera una URL como: .../financial-fees/?status=Pending
     if (status != null && status.isNotEmpty) {
       uri = uri.replace(queryParameters: {'status': status});
     }
