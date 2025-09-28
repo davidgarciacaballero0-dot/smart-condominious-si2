@@ -1,10 +1,9 @@
-// lib/pages/security_dashboard_page.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/visitor_log_model.dart';
 import '../services/security_service.dart';
 import 'add_visitor_log_page.dart';
-import 'visitor_history_page.dart'; // Lo crearemos en el futuro
+import 'visitor_history_page.dart';
 
 class SecurityDashboardPage extends StatefulWidget {
   const SecurityDashboardPage({Key? key}) : super(key: key);
@@ -77,9 +76,11 @@ class _SecurityDashboardPageState extends State<SecurityDashboardPage> {
             tooltip: 'Ver Historial Completo',
             onPressed: () {
               // Navegaremos a la página de historial en un paso futuro
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('Página de historial en construcción.'),
-              ));
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const VisitorHistoryPage()),
+              );
             },
           ),
         ],
@@ -122,8 +123,6 @@ class _SecurityDashboardPageState extends State<SecurityDashboardPage> {
             context,
             MaterialPageRoute(builder: (context) => const AddVisitorLogPage()),
           );
-          // Si el formulario devolvió 'true' (porque se guardó con éxito),
-          // recargamos la lista de visitantes.
           if (result == true) {
             _loadActiveVisitors();
           }

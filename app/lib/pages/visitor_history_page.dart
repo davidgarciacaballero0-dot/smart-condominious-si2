@@ -49,6 +49,7 @@ class _VisitorHistoryPageState extends State<VisitorHistoryPage> {
               return const Center(child: Text('No hay registros de visitas.'));
             }
             return ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
               itemCount: visitors.length,
               itemBuilder: (context, index) {
                 final visitor = visitors[index];
@@ -64,19 +65,24 @@ class _VisitorHistoryPageState extends State<VisitorHistoryPage> {
   Widget _buildHistoryCard(VisitorLog visitor) {
     final entryTime = DateTime.parse(visitor.entryTime).toLocal();
     final formattedEntry = DateFormat('dd/MM/yy HH:mm').format(entryTime);
-    final exitTime = visitor.exitTime != null ? DateTime.parse(visitor.exitTime!).toLocal() : null;
-    final formattedExit = exitTime != null ? DateFormat('dd/MM/yy HH:mm').format(exitTime) : 'N/A';
+    final exitTime = visitor.exitTime != null
+        ? DateTime.parse(visitor.exitTime!).toLocal()
+        : null;
+    final formattedExit =
+        exitTime != null ? DateFormat('HH:mm \'hs\'').format(exitTime) : 'N/A';
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: ListTile(
         leading: CircleAvatar(
           backgroundImage: visitor.visitorPhotoUrl != null
               ? NetworkImage(visitor.visitorPhotoUrl!)
               : null,
-          child: visitor.visitorPhotoUrl == null ? const Icon(Icons.person) : null,
+          child:
+              visitor.visitorPhotoUrl == null ? const Icon(Icons.person) : null,
         ),
-        title: Text(visitor.fullName, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(visitor.fullName,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -86,8 +92,11 @@ class _VisitorHistoryPageState extends State<VisitorHistoryPage> {
           ],
         ),
         trailing: Chip(
-          label: Text(visitor.status),
-          backgroundColor: visitor.status == 'Activo' ? Colors.green[100] : Colors.grey[200],
+          label: Text(visitor.status, style: const TextStyle(fontSize: 12)),
+          backgroundColor: visitor.status == 'Activo'
+              ? Colors.lightGreen[100]
+              : Colors.grey[200],
+          side: BorderSide.none,
         ),
       ),
     );

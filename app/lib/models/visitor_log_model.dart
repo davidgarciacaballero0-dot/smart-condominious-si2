@@ -10,7 +10,7 @@ class VisitorLog {
   final String entryTime;
   final String? exitTime;
   final String status;
-  final String? visitorPhotoUrl; // <-- NUEVO CAMPO PARA LA FOTO
+  final String? visitorPhotoUrl;
 
   VisitorLog({
     required this.id,
@@ -22,10 +22,11 @@ class VisitorLog {
     required this.entryTime,
     this.exitTime,
     required this.status,
-    this.visitorPhotoUrl, // <-- AÑADIDO AL CONSTRUCTOR
+    this.visitorPhotoUrl,
   });
 
   factory VisitorLog.fromJson(Map<String, dynamic> json) {
+    // Formateamos la información de la unidad habitacional para mostrarla
     String unitInfo = 'N/A';
     if (json['housing_unit_details'] != null) {
       final details = json['housing_unit_details'];
@@ -43,7 +44,6 @@ class VisitorLog {
       entryTime: json['entry_time'] ?? '',
       exitTime: json['exit_time'],
       status: json['status'] ?? 'Desconocido',
-      // El backend devuelve la URL de la foto si existe
       visitorPhotoUrl: json['visitor_photo'],
     );
   }
