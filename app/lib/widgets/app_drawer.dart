@@ -2,11 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_provider.dart';
-import '../pages/finances_page.dart';
-// Importamos SOLAMENTE las páginas que ya hemos creado
+
+// --- IMPORTACIONES CORREGIDAS Y COMPLETAS ---
 import '../pages/dashboard_page.dart';
-import '../pages/reservations_page.dart';
+import '../pages/reservations_page.dart'; // <-- IMPORTACIÓN QUE FALTABA
 import '../pages/communications_page.dart';
+import '../pages/finances_page.dart';
+import '../pages/profile_page.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({Key? key}) : super(key: key);
@@ -60,49 +62,33 @@ class AppDrawer extends StatelessWidget {
             leading: const Icon(Icons.monetization_on_outlined),
             title: const Text('Pago de Expensas'),
             onTap: () {
-              // Dejamos este como estaba, porque la página aún no existe
-              print('Navegar a Finanzas (página no creada aún)');
+              Navigator.pop(context);
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const FinancesPage()));
             },
           ),
-          // --- ESTE ES EL CÓDIGO CORRECTO Y ÚNICO QUE DEBEMOS AÑADIR AHORA ---
           ListTile(
             leading: const Icon(Icons.campaign_outlined),
             title: const Text('Comunicados'),
             onTap: () {
-              Navigator.pop(context); // Cierra el menú lateral
+              Navigator.pop(context);
               Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (context) => const CommunicationsPage()));
             },
           ),
-          // -----------------------------------------------------------------
           const Divider(),
-          ExpansionTile(
-            leading: const Icon(Icons.home_work_outlined),
-            title: const Text('Mi Unidad'),
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(left: 16.0),
-                child: ListTile(
-                  leading: const Icon(Icons.directions_car_outlined),
-                  title: const Text('Gestionar Vehículos'),
-                  onTap: () {
-                    print('Navegar a Vehículos');
-                  },
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 16.0),
-                child: ListTile(
-                  leading: const Icon(Icons.pets_outlined),
-                  title: const Text('Gestionar Mascotas'),
-                  onTap: () {
-                    print('Navegar a Mascotas');
-                  },
-                ),
-              ),
-            ],
+          ListTile(
+            leading: const Icon(Icons.person_outline),
+            title: const Text('Mi Perfil y Unidad'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const ProfilePage()));
+            },
           ),
           const Divider(),
           ListTile(
@@ -118,3 +104,4 @@ class AppDrawer extends StatelessWidget {
     );
   }
 }
+// --- FIN DEL CÓDIGO CORREGIDO Y COMPLETO ---

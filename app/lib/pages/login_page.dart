@@ -53,7 +53,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset('assets/images/logo_login.png', height: 120),
+                Image.asset('assets/images/logo_main.png', height: 120),
                 const SizedBox(height: 40),
                 TextFormField(
                   controller: _emailController,
