@@ -1,10 +1,14 @@
-// lib/pages/finances_page.dart
+// ignore_for_file: unused_element
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/financial_fee_model.dart';
 import '../services/finances_service.dart';
 
 class FinancesPage extends StatefulWidget {
   const FinancesPage({Key? key}) : super(key: key);
+
   @override
   _FinancesPageState createState() => _FinancesPageState();
 }
@@ -14,6 +18,8 @@ class _FinancesPageState extends State<FinancesPage>
   final _financesService = FinancesService();
   Future<List<FinancialFee>>? _feesFuture;
   late TabController _tabController;
+  bool _isPaying =
+      false; // Variable para controlar el estado de carga del botón
 
   @override
   void initState() {
@@ -28,6 +34,41 @@ class _FinancesPageState extends State<FinancesPage>
     });
   }
 
+  // --- NUEVA FUNCIÓN PARA MANEJAR EL PAGO ---
+  Future<void> _handlePayment(FinancialFee fee) async {
+    setState(() {
+      _isPaying = true;
+    });
+
+    final checkoutUrl = await _financesService.initiatePayment(fee.id);
+
+    if (mounted) {
+      if (checkoutUrl != null) {
+        final uri = Uri.parse(checkoutUrl);
+        // Usamos el paquete para lanzar la URL. Abrirá el navegador del dispositivo.
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('No se pudo abrir el enlace de pago.'),
+                backgroundColor: Colors.red),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Error al generar el enlace de pago.'),
+              backgroundColor: Colors.red),
+        );
+      }
+    }
+
+    setState(() {
+      _isPaying = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,9 +78,7 @@ class _FinancesPageState extends State<FinancesPage>
           controller: _tabController,
           tabs: const [
             Tab(icon: Icon(Icons.warning_amber_rounded), text: 'PENDIENTES'),
-            Tab(
-                icon: Icon(Icons.history),
-                text: 'HISTORIAL DE PAGOS'), // <-- TEXTO E ICONO CAMBIADOS
+            Tab(icon: Icon(Icons.history), text: 'HISTORIAL DE PAGOS'),
           ],
         ),
       ),
@@ -54,13 +93,11 @@ class _FinancesPageState extends State<FinancesPage>
                 child: Text('Error al cargar los datos financieros.'));
           }
           final allFees = snapshot.data ?? [];
-          // CORRECCIÓN: Ahora también incluimos las vencidas como pendientes
-          final pendingFees = allFees
-              .where(
-                  (fee) => fee.status == 'Pendiente' || fee.status == 'Vencido')
-              .toList();
+          final pendingFees =
+              allFees.where((fee) => fee.status == 'Pending').toList();
           final paidFees =
-              allFees.where((fee) => fee.status == 'Pagado').toList();
+              allFees.where((fee) => fee.status == 'Paid').toList();
+
           return TabBarView(
             controller: _tabController,
             children: [
@@ -77,12 +114,15 @@ class _FinancesPageState extends State<FinancesPage>
     // ... (El código de esta función no cambia)
     if (fees.isEmpty) {
       return Center(
-          child: Text(
-              isPending
-                  ? 'No tienes cuotas pendientes.'
-                  : 'No tienes pagos registrados.',
-              style: const TextStyle(fontSize: 16, color: Colors.grey)));
+        child: Text(
+          isPending
+              ? '¡Felicidades! No tienes cuotas pendientes.'
+              : 'Aún no tienes pagos registrados.',
+          style: const TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      );
     }
+    // El RefreshIndicator permite al usuario deslizar hacia abajo para recargar la lista
     return RefreshIndicator(
       onRefresh: () async => _loadFees(),
       child: ListView.builder(
@@ -90,6 +130,7 @@ class _FinancesPageState extends State<FinancesPage>
         itemCount: fees.length,
         itemBuilder: (context, index) {
           final fee = fees[index];
+          // Llama a la función que construye cada tarjeta individual
           return _buildFeeCard(fee, isPending: isPending);
         },
       ),
@@ -97,17 +138,14 @@ class _FinancesPageState extends State<FinancesPage>
   }
 
   Widget _buildFeeCard(FinancialFee fee, {required bool isPending}) {
-    // ... (El código de esta función no cambia)
     return Card(
       elevation: 4,
       margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
         side: isPending
-            ? BorderSide(
-                color: fee.status == 'Vencido' ? Colors.red : Colors.orange,
-                width: 1.5)
-            : const BorderSide(color: Colors.green, width: 1.5),
+            ? const BorderSide(color: Colors.orange, width: 1.5)
+            : BorderSide.none,
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -122,27 +160,30 @@ class _FinancesPageState extends State<FinancesPage>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Monto: \$${fee.amount.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w500)),
+                    style: const TextStyle(fontSize: 16)),
                 Text('Vence: ${fee.dueDate}',
-                    style:
-                        const TextStyle(fontSize: 14, color: Colors.black54)),
+                    style: const TextStyle(fontSize: 14, color: Colors.grey)),
               ],
             ),
             if (isPending) ...[
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
+                // --- BOTÓN DE PAGO ACTUALIZADO ---
                 child: ElevatedButton.icon(
-                  onPressed: () =>
-                      print('Iniciar pago para la cuota ID: ${fee.id}'),
-                  icon: const Icon(Icons.payment),
-                  label: const Text('PAGAR AHORA'),
+                  onPressed: _isPaying ? null : () => _handlePayment(fee),
+                  icon: _isPaying
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 3))
+                      : const Icon(Icons.payment),
+                  label: Text(_isPaying ? 'GENERANDO...' : 'PAGAR AHORA'),
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8))),
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               )
             ]
