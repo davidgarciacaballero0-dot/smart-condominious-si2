@@ -1,81 +1,80 @@
-// app/lib/services/reservations_service.dart
-
-import 'package:http/http.dart' as http;
-import 'package:app/services/auth_service.dart';
-import 'package:app/models/reservation_model.dart';
-import 'package:app/models/common_area_model.dart';
-import 'dart:convert';
+// lib/services/reservations_service.dart
+import 'package:dio/dio.dart';
+import '../models/common_area_model.dart';
+import '../models/reservation_model.dart';
+import 'api_client.dart';
 
 class ReservationsService {
-  final String _baseUrl =
-      "https://smart-condominium-backend-fuab.onrender.com/api/administration";
+  final Dio _dio = ApiClient().dio;
 
-  final AuthService _authService = AuthService();
-
-  Future<List<Reservation>> getReservations() async {
-    final token = await _authService.getToken();
-    if (token == null) throw Exception('Usuario no autenticado.');
-    final response = await http.get(
-      Uri.parse('$_baseUrl/reservations/'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-    if (response.statusCode == 200) {
-      // --- CAMBIO CLAVE AQUÍ ---
-      final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      final List<dynamic> jsonList =
-          jsonResponse['results']; // Extraemos la lista de 'results'
-      return jsonList.map((json) => Reservation.fromJson(json)).toList();
-    } else {
-      throw Exception('Error al cargar las reservas.');
-    }
-  }
-
+  // ... (los métodos getCommonAreas y getMyReservations no cambian) ...
   Future<List<CommonArea>> getCommonAreas() async {
-    final token = await _authService.getToken();
-    if (token == null) throw Exception('Usuario no autenticado.');
-    final response = await http.get(
-      Uri.parse('$_baseUrl/common-areas/'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(response.body);
-      return jsonList.map((json) => CommonArea.fromJson(json)).toList();
-    } else {
-      throw Exception('Error al cargar las áreas comunes.');
+    try {
+      final response = await _dio.get('/administration/common-areas/');
+      return (response.data as List)
+          .map((areaJson) => CommonArea.fromJson(areaJson))
+          .toList();
+    } catch (e) {
+      print('Error fetching common areas: $e');
+      return [];
     }
   }
 
-  Future<void> createReservation(
-      {required int commonAreaId,
-      required String date,
-      required String timeSlot}) async {
-    final token = await _authService.getToken();
-    if (token == null) throw Exception('Usuario no autenticado.');
-    final response = await http.post(
-      Uri.parse('$_baseUrl/reservations/'),
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Bearer $token'
-      },
-      body: jsonEncode(
-          {'common_area': commonAreaId, 'date': date, 'time_slot': timeSlot}),
-    );
-    if (response.statusCode != 201) {
-      throw Exception('Error al crear la reserva.');
+  Future<List<Reservation>> getMyReservations() async {
+    try {
+      final response =
+          await _dio.get('/administration/reservations/my_reservations/');
+      return (response.data as List)
+          .map((resJson) => Reservation.fromJson(resJson))
+          .toList();
+    } catch (e) {
+      print('Error fetching my reservations: $e');
+      return [];
     }
   }
 
-  /// Envía una petición para eliminar/cancelar una reserva.
-  Future<void> cancelReservation(int reservationId) async {
-    final token = await _authService.getToken();
-    if (token == null) throw Exception('Usuario no autenticado.');
-    final response = await http.delete(
-      Uri.parse('$_baseUrl/reservations/$reservationId/'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-    if (response.statusCode != 204) {
-      // 204 No Content
-      throw Exception('Error al cancelar la reserva.');
+  Future<bool> createReservation(
+      {required int commonAreaId, required String date}) async {
+    try {
+      await _dio.post(
+        '/administration/reservations/',
+        data: {
+          'common_area': commonAreaId,
+          'reservation_date': date,
+        },
+      );
+      return true;
+    } on DioException catch (e) {
+      print('Error creating reservation: ${e.response?.data}');
+      return false;
+    }
+  }
+
+  // --- NUEVOS MÉTODOS ---
+
+  // MÉTODO PARA ACTUALIZAR UNA RESERVA (SOLO EL ESTADO)
+  Future<bool> updateReservationStatus(
+      {required int reservationId, required String newStatus}) async {
+    try {
+      await _dio.patch(
+        '/administration/reservations/$reservationId/',
+        data: {'status': newStatus},
+      );
+      return true; // Actualización exitosa
+    } on DioException catch (e) {
+      print('Error updating reservation status: ${e.response?.data}');
+      return false;
+    }
+  }
+
+  // MÉTODO PARA ELIMINAR UNA RESERVA
+  Future<bool> deleteReservation({required int reservationId}) async {
+    try {
+      await _dio.delete('/administration/reservations/$reservationId/');
+      return true; // Eliminación exitosa
+    } on DioException catch (e) {
+      print('Error deleting reservation: ${e.response?.data}');
+      return false;
     }
   }
 }

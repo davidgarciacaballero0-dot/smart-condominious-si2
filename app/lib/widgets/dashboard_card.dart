@@ -1,3 +1,4 @@
+// lib/widgets/dashboard_card.dart
 import 'package:flutter/material.dart';
 
 class DashboardCard extends StatelessWidget {
@@ -6,32 +7,33 @@ class DashboardCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const DashboardCard({
-    super.key,
+    Key? key,
     required this.icon,
     required this.title,
     required this.onTap,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 4.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Icon(icon,
-                size: 50.0, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(height: 16.0),
+            Icon(icon, size: 48.0, color: Theme.of(context).primaryColor),
+            const SizedBox(height: 10),
             Text(
               title,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 16.0,
-                fontWeight: FontWeight.w600,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],

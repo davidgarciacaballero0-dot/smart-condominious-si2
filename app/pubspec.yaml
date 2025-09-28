@@ -1,31 +1,42 @@
-name: app
-description: "A new Flutter project."
-publish_to: 'none'
+name: app # Puedes cambiar "app" por el nombre de tu proyecto si quieres
+description: "A new Flutter project for Smart Condominium."
+
+# Esta línea previene que el paquete sea publicado accidentalmente.
+publish_to: 'none' 
 
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.5.3 <4.0.0'
+  sdk: '>=3.2.3 <4.0.0' # Asegúrate que tu versión de Flutter sea compatible
 
+#
+# AQUÍ VA LA LISTA DE PAQUETES (LA LISTA DE COMPRAS)
+#
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.8
-  table_calendar: ^3.2.0
-  intl: ^0.20.0
-  http: ^1.2.1                  # <-- AÑADE ESTA LÍNEA
-  flutter_secure_storage: ^9.0.0 # <-- Y ESTA LÍNEA
-  url_launcher: ^6.3.2
+
+  # Paquetes que añadimos para nuestro proyecto
+  dio: ^5.4.0
+  provider: ^6.1.1
+  flutter_secure_storage: ^9.0.0
+
+  cupertino_icons: ^1.0.2
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^6.0.0
+  flutter_lints: ^2.0.0
+intl: ^0.18.1 # <-- AÑADE ESTA LÍNEA
 
+#
+# ESTA ES LA SECCIÓN MÁS IMPORTANTE PARA LOS ERRORES
+#
 flutter:
   uses-material-design: true
 
-  # Para añadir assets a tu aplicación, añade una sección de assets como esta:
+  # Aquí le dices a la app dónde encontrar tus imágenes
+  # La sangría (los espacios) es MUY importante. Deben ser dos espacios.
   assets:
     - assets/images/
-    - assets/images/areas/ # <-- AÑADE ESTA LÍNEA PARA LA NUEVA CARPETA

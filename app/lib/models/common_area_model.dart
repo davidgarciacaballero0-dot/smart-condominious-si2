@@ -1,25 +1,29 @@
-// En: app/lib/models/common_area_model.dart
-
+// lib/models/common_area_model.dart
 class CommonArea {
   final int id;
   final String name;
   final String description;
-  final String? imageUrl; // <-- CAMPO AÑADIDO (Opcional)
+  final int capacity;
+  final String imageUrl;
 
   CommonArea({
     required this.id,
     required this.name,
     required this.description,
-    this.imageUrl, // <-- CAMPO AÑADIDO
+    required this.capacity,
+    required this.imageUrl,
   });
 
   factory CommonArea.fromJson(Map<String, dynamic> json) {
+    // Aseguramos que la URL de la imagen siempre sea completa
+    final imagePath = json['image'] ?? '';
+    final baseUrl = "https://smart-condominium-backend-fuab.onrender.com";
     return CommonArea(
       id: json['id'],
-      name: json['name'],
-      description: json['description'],
-      // Leemos el campo de la API, si no viene, será null.
-      imageUrl: json['image_url'],
+      name: json['name'] ?? 'Sin Nombre',
+      description: json['description'] ?? '',
+      capacity: json['capacity'] ?? 0,
+      imageUrl: imagePath.startsWith('http') ? imagePath : "$baseUrl$imagePath",
     );
   }
 }
