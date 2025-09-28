@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/visitor_log_model.dart';
 import '../services/security_service.dart';
 import 'add_visitor_log_page.dart';
+import 'visitor_history_page.dart'; // Lo crearemos en el futuro
 
 class SecurityDashboardPage extends StatefulWidget {
   const SecurityDashboardPage({Key? key}) : super(key: key);
@@ -21,12 +22,14 @@ class _SecurityDashboardPageState extends State<SecurityDashboardPage> {
     _loadActiveVisitors();
   }
 
+  // Carga o recarga la lista de visitantes activos
   void _loadActiveVisitors() {
     setState(() {
       _activeVisitorsFuture = _securityService.getActiveVisitors();
     });
   }
 
+  // Muestra un diálogo de confirmación y registra la salida
   Future<void> _registerExit(int visitorLogId) async {
     final bool? confirm = await showDialog(
       context: context,
@@ -58,7 +61,7 @@ class _SecurityDashboardPageState extends State<SecurityDashboardPage> {
         );
       }
       if (success) {
-        _loadActiveVisitors();
+        _loadActiveVisitors(); // Recarga la lista si la salida fue exitosa
       }
     }
   }
@@ -68,6 +71,18 @@ class _SecurityDashboardPageState extends State<SecurityDashboardPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Panel de Seguridad'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: 'Ver Historial Completo',
+            onPressed: () {
+              // Navegaremos a la página de historial en un paso futuro
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Página de historial en construcción.'),
+              ));
+            },
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async => _loadActiveVisitors(),
@@ -101,13 +116,14 @@ class _SecurityDashboardPageState extends State<SecurityDashboardPage> {
           },
         ),
       ),
-      // --- BOTÓN FLOTANTE ACTUALIZADO ---
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           final result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const AddVisitorLogPage()),
           );
+          // Si el formulario devolvió 'true' (porque se guardó con éxito),
+          // recargamos la lista de visitantes.
           if (result == true) {
             _loadActiveVisitors();
           }
@@ -118,8 +134,8 @@ class _SecurityDashboardPageState extends State<SecurityDashboardPage> {
     );
   }
 
+  // Widget para construir la tarjeta de cada visitante
   Widget _buildVisitorCard(VisitorLog visitor) {
-    // ... (El código de la tarjeta no cambia)
     final entryTime = DateTime.parse(visitor.entryTime).toLocal();
     final formattedTime = DateFormat('HH:mm \'hs\'').format(entryTime);
 
@@ -144,9 +160,11 @@ class _SecurityDashboardPageState extends State<SecurityDashboardPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(visitor.fullName,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(
+                    visitor.fullName,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 4),
                   Text('DNI: ${visitor.dni}'),
                   Text('Visita a: ${visitor.housingUnit}'),
@@ -160,7 +178,8 @@ class _SecurityDashboardPageState extends State<SecurityDashboardPage> {
                 backgroundColor: Colors.red[400],
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
               child: const Text('Salida'),
             ),
