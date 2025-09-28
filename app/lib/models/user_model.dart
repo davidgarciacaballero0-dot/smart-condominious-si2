@@ -5,6 +5,7 @@ class User {
   final String firstName;
   final String lastName;
   final String? roleName;
+  final String? housingUnitInfo; // <-- NUEVO CAMPO AÑADIDO
 
   User({
     required this.id,
@@ -12,6 +13,7 @@ class User {
     required this.firstName,
     required this.lastName,
     this.roleName,
+    this.housingUnitInfo, // <-- AÑADIDO AL CONSTRUCTOR
   });
 
   factory User.fromJson(Map<String, dynamic> json) {

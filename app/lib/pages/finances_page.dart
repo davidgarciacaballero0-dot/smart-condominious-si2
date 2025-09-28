@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import '../models/financial_fee_model.dart';
 import '../services/finances_service.dart';
-              
+
 class FinancesPage extends StatefulWidget {
   const FinancesPage({Key? key}) : super(key: key);
   @override

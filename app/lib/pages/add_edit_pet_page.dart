@@ -1,7 +1,7 @@
 // lib/pages/add_edit_pet_page.dart
 import 'package:flutter/material.dart';
 import '../services/profile_service.dart';
-
+  
 class AddEditPetPage extends StatefulWidget {
   const AddEditPetPage({Key? key}) : super(key: key);
 
@@ -14,6 +14,7 @@ class _AddEditPetPageState extends State<AddEditPetPage> {
   final _profileService = ProfileService();
   bool _isLoading = false;
 
+  // Controladores para cada campo del formulario
   final _nameController = TextEditingController();
   final _speciesController = TextEditingController();
   final _breedController = TextEditingController();
@@ -25,6 +26,7 @@ class _AddEditPetPageState extends State<AddEditPetPage> {
         _isLoading = true;
       });
 
+      // Creamos un mapa con los datos del formulario
       final petData = {
         'name': _nameController.text,
         'species': _speciesController.text,
@@ -32,6 +34,7 @@ class _AddEditPetPageState extends State<AddEditPetPage> {
         'color': _colorController.text,
       };
 
+      // Llamamos al servicio para crear la mascota
       final newPet = await _profileService.createPet(petData);
       setState(() {
         _isLoading = false;
@@ -48,6 +51,8 @@ class _AddEditPetPageState extends State<AddEditPetPage> {
           ),
         );
         if (success) {
+          // Si se creó con éxito, cerramos la pantalla del formulario
+          // y devolvemos 'true' para que la lista anterior se actualice
           Navigator.pop(context, true);
         }
       }
@@ -56,6 +61,7 @@ class _AddEditPetPageState extends State<AddEditPetPage> {
 
   @override
   void dispose() {
+    // Limpiamos los controladores
     _nameController.dispose();
     _speciesController.dispose();
     _breedController.dispose();
@@ -76,38 +82,53 @@ class _AddEditPetPageState extends State<AddEditPetPage> {
           children: [
             TextFormField(
               controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Nombre'),
+              decoration: const InputDecoration(
+                labelText: 'Nombre de la mascota',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.pets),
+              ),
               validator: (value) =>
                   (value ?? '').isEmpty ? 'El nombre es requerido' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _speciesController,
-              decoration:
-                  const InputDecoration(labelText: 'Especie (ej. Perro, Gato)'),
+              decoration: const InputDecoration(
+                labelText: 'Especie (ej. Perro, Gato)',
+                border: OutlineInputBorder(),
+              ),
               validator: (value) =>
                   (value ?? '').isEmpty ? 'La especie es requerida' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _breedController,
-              decoration: const InputDecoration(labelText: 'Raza'),
+              decoration: const InputDecoration(
+                labelText: 'Raza',
+                border: OutlineInputBorder(),
+              ),
               validator: (value) =>
                   (value ?? '').isEmpty ? 'La raza es requerida' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _colorController,
-              decoration: const InputDecoration(labelText: 'Color'),
+              decoration: const InputDecoration(
+                labelText: 'Color',
+                border: OutlineInputBorder(),
+              ),
               validator: (value) =>
                   (value ?? '').isEmpty ? 'El color es requerido' : null,
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _submitForm,
-              child: _isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('GUARDAR MASCOTA'),
+            SizedBox(
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _submitForm,
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('GUARDAR MASCOTA'),
+              ),
             )
           ],
         ),

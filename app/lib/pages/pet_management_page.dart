@@ -2,8 +2,7 @@
 import 'package:flutter/material.dart';
 import '../models/pet_model.dart';
 import '../services/profile_service.dart';
-import 'add_edit_pet_page.dart'; // <-- Importamos la página del formulario
-
+import 'add_edit_pet_page.dart'; // Lo crearemos en el siguiente paso
 
 class PetManagementPage extends StatefulWidget {
   const PetManagementPage({Key? key}) : super(key: key);

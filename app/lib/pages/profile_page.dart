@@ -21,7 +21,7 @@ class ProfilePage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          // ... (Card con info de residente sin cambios)
+          // Tarjeta con la información del residente (sin cambios)
           Card(
             elevation: 4,
             shape:
@@ -65,6 +65,7 @@ class ProfilePage extends StatelessWidget {
                     builder: (context) => const VehicleManagementPage())),
           ),
           const SizedBox(height: 16),
+
           // --- OPCIÓN DE MASCOTAS ACTUALIZADA ---
           _buildManagementOption(
             context: context,
@@ -77,6 +78,7 @@ class ProfilePage extends StatelessWidget {
                     builder: (context) => const PetManagementPage())),
           ),
           const SizedBox(height: 16),
+
           _buildManagementOption(
             context: context,
             icon: Icons.feedback,
