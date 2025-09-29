@@ -10,7 +10,7 @@ void main() async {
   // <-- 2. CONVIERTE main EN ASÍNCRONO
   WidgetsFlutterBinding
       .ensureInitialized(); // Necesario para esperar la inicialización
-  await initializeDateFormatting('es_ES', null); // <-- 3. INICIALIZA EL IDIOMA
+  // await initializeDateFormatting('es_ES', null); // <-- 3. INICIALIZA EL IDIOMA
   runApp(const SmartCondominiumApp());
 }
 
